@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
 
-enum Mark {
+pub enum Mark {
     Flagged,
     NotFlagged,
 }
 
-enum Status {
+pub enum Status {
     Open,
     Closed(Mark),
 }
 
-enum Vsebina {
+pub enum Vsebina {
     Stevilo(u8),
     Mina,
 }
 
-struct Tile {
+pub struct Tile {
     vsebina: Vsebina,
     status: Status,
     mesto: (u16, u16)
