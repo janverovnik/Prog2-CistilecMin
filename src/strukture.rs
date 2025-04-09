@@ -1,4 +1,4 @@
-use std::collections::HashTable;
+use std::collections::HashMap;
 
 
 enum Mark {
@@ -23,27 +23,27 @@ struct Tile {
 }
 
 pub struct Mreza {
-    velikost: (u16,u16),
-    tiles: HashMap<(u32,u32), Tile>,
+    velikost: (u16, u16),
+    tiles: HashMap<(u16, u16), Tile>,
 }
 // let field = HashMap<(u32,u32), Tile>
 
 
 impl Tile {
-    pub fn vsebina(&self) -> Vsebina {
-        self.vsebina
+    pub fn vsebina(&self) -> &Vsebina {
+        &self.vsebina
     }
 
-    pub fn status(&self) -> Status {
-        self.status
+    pub fn status(&self) -> &Status {
+        &self.status
     }
 }
 
 impl Mreza {
-    pub fn tile(&self,i:u16,j: u16) -> Option<Tile> {
-        self.tiles.get((i, j))
+    pub fn tile(&self, i: u16, j: u16) -> Option<&Tile> {
+        self.tiles.get(&(i, j))
     }
-    pub fn add_tile(&self, tile:Tile ,i:u16 ,j:u16) -> () {
+    pub fn add_tile(&mut self, tile:Tile ,i:u16 ,j:u16) -> Option<Tile>  {
         self.tiles.insert((i,j),tile)
     }
 }
@@ -52,15 +52,12 @@ impl Mreza {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state;
-
     #[test]
     fn poizkus() {
         let test_mreza = Mreza {
             velikost: (123,456),
             tiles: HashMap::new()
         };
-        test_mreza
     }
 }
 
