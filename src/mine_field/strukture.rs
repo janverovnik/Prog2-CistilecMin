@@ -1,9 +1,14 @@
 use std::collections::HashTable;
 
 
+enum Mark {
+    Flagged,
+    NotFlagged,
+}
+
 enum Status {
     Open,
-    Closed,
+    Closed(Mark),
 }
 
 enum Vsebina {
