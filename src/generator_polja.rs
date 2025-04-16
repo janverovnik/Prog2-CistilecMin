@@ -59,8 +59,15 @@ impl Mreza {
                         };
                     }
                 }
+        };
+        for i in 0..velikost.0 {
+            for j in 0..velikost.1 {
+                if mreza.je_prazno((i,j)) {
+                    mreza.add_tile(Tile::new_number(mreza.pripisi_stevilo((i, j))),(i,j));
+                }
             }
-            mreza  
+        };
+        mreza  
         }
 
 }
