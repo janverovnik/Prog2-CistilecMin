@@ -87,8 +87,18 @@ impl Mreza {
         return mozni;
     }
     pub fn pripisi_stevilo(&self, mesto:(u16,u16)) -> u8 {
-        let (i,j) = mesto;
-        2 //TODO
+        let (i, j) = mesto;
+        let mut stevec: u8 = 0;
+        for sosed in &self.sosedje(mesto) {
+            match self.tile(*sosed) {
+                None => stevec += 0,
+                Some(tile) => 
+                    if (*tile).vsebina == Mina {
+                        stevec += 1
+                }
+            }
+        }
+        stevec
     }
     
     pub fn prazna(velikost: (u16,u16)) -> Mreza {
