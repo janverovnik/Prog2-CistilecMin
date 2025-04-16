@@ -59,11 +59,11 @@ impl Tile {
 use crate::strukture::Vsebina::Mina;
 
 impl Mreza {
-    pub fn tile(&self, mesto:(u16,u16)) -> Option<&Tile> {
+    pub fn tile(&self, mesto:(u16, u16)) -> Option<&Tile> {
         self.tiles.get(&mesto)
     }
-    pub fn add_tile(&mut self, tile:Tile ,mesto:(u16,u16)) -> Option<Tile>  {
-        self.tiles.insert(mesto,tile)
+    pub fn add_tile(&mut self, tile:Tile ,mesto:(u16, u16)) -> Option<Tile>  {
+        self.tiles.insert(mesto, tile)
     }
 
     // pub fn add_tile(&mut self, tile: Tile, i: u16, j: u16) -> Option<Tile> {
@@ -77,7 +77,7 @@ impl Mreza {
             }
             return mine_vec;
         }
-        pub fn sosedje(&self, mesto:(u16,u16)) -> Vec<(u16, u16)> {
+        pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
             let (i,j) = mesto;
             let mut mozni = vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
             (i - 1, j), (i + 1, j),
@@ -86,8 +86,7 @@ impl Mreza {
         mozni.retain(|n| keys.contains(&n));
         return mozni;
     }
-    pub fn pripisi_stevilo(&self, mesto:(u16,u16)) -> u8 {
-        let (i, j) = mesto;
+    pub fn pripisi_stevilo(&self, mesto:(u16, u16)) -> u8 {
         let mut stevec: u8 = 0;
         for sosed in &self.sosedje(mesto) {
             match self.tile(*sosed) {
@@ -101,7 +100,7 @@ impl Mreza {
         stevec
     }
     
-    pub fn prazna(velikost: (u16,u16)) -> Mreza {
+    pub fn prazna(velikost: (u16, u16)) -> Mreza {
         Mreza {
             velikost: velikost,
             tiles: HashMap::new(),
