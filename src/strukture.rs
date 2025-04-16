@@ -37,14 +37,37 @@ impl Tile {
     pub fn status(&self) -> &Status {
         &self.status
     }
+
+    pub fn new_bomb(mesto:(u16,u16)) -> Tile {
+        Tile {
+            vsebina: Vsebina::Mina,
+            status: Status::Closed(Mark::NotFlagged),
+            mesto: mesto,
+        }
+    }
+    
+    pub fn new_number(mesto: (u16, u16),stevilo) -> Tile {
+        Tile {
+            vsebina: Vsebina::Stevilo(stevilo),
+            status: Status::Closed(Mark::NotFlagged),
+            mesto: mesto,
+        }
+    }
 }
 
 impl Mreza {
-    pub fn tile(&self, i: u16, j: u16) -> Option<&Tile> {
-        self.tiles.get(&(i, j))
+    pub fn tile(&self, mesto:(u16,u16)) -> Option<&Tile> {
+        self.tiles.get(&mesto)
     }
-    pub fn add_tile(&mut self, tile:Tile ,i:u16 ,j:u16) -> Option<Tile>  {
-        self.tiles.insert((i,j),tile)
+    pub fn add_tile(&mut self, tile:Tile ,mesto:(u16,u16)) -> Option<Tile>  {
+        self.tiles.insert(mesto,tile)
+    }
+
+    pub fn prazna(velikost: (u16,u16)) -> Mreza {
+        Mreza {
+            velikost: velikost,
+            tiles: HashMap::new(),
+        }
     }
 }
     
