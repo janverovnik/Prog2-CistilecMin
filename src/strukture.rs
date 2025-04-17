@@ -79,9 +79,15 @@ impl Mreza {
         }
         pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
             let (i,j) = mesto;
-            let mut mozni = vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
-            (i - 1, j), (i + 1, j),
-        (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)];
+            // let mut mozni: Vec<(u16, u16)>;
+            let mut mozni = match (i,j) {
+                (0,0) => vec![(0,1),(1,0),(1,1)],
+                (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
+                (i,0) => vec![(i - 1, 0), (i + 1, 0),(i - 1, 1), (i, 1), (i + 1, 1)],
+                (_,_) => vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
+                (i - 1, j), (i + 1, j),
+            (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)],
+            };
         let keys: Vec<&(u16, u16)>  = self.tiles.keys().collect();
         mozni.retain(|n| keys.contains(&n));
         return mozni;
