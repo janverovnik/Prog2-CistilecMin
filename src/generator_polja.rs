@@ -92,3 +92,13 @@ fn random_array(mut st_vseh:u16,mut st_min:u16) -> Vec<bool> {
     nakljucno
 }
 
+#[cfg(test)]
+mod tests {
+    use super::random_array;
+
+    #[test]
+    fn permutacija() -> () {
+        let vector = random_array(42, 15);
+        // print!("{}",vector);
+    }
+}

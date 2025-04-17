@@ -18,13 +18,13 @@ pub enum Vsebina {
 }
 
 pub struct Tile {
-    vsebina: Vsebina,
+    pub vsebina: Vsebina,
     status: Status,
     // mesto: (u16, u16)
 }
 
 pub struct Mreza {
-    velikost: (u16, u16),
+    pub velikost: (u16, u16),
     tiles: HashMap<(u16, u16), Tile>,
 }
 
