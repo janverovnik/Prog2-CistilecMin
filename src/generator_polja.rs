@@ -20,7 +20,10 @@ impl Mreza {
         let mut naslednji : bool;
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
-                naslednji = zaporedje.next().is_some();
+                naslednji = match zaporedje.next() {
+                    Some(t) => t,
+                    None => true,
+                };
                 if naslednji {
                     mreza.add_tile(Tile::new_bomb(), (i,j));
                 }
@@ -53,7 +56,10 @@ impl Mreza {
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
                if razlika(i,s0) > 1 || razlika(j,s1) > 1 {
-                naslednji = zaporedje.next().is_some();
+                naslednji = match zaporedje.next() {
+                    Some(t) => t,
+                    None => true,
+                };
                         if naslednji {
                             mreza.add_tile(Tile::new_bomb(), (i,j));
                         };
@@ -98,7 +104,13 @@ mod tests {
 
     #[test]
     fn permutacija() -> () {
-        let vector = random_array(42, 15);
-        // print!("{}",vector);
+        let binding = random_array(10, 3);
+        let mut vector_iter = binding.iter();
+        // let mut vector_iter = random_array(42, 15).iter();
+        let mut nasledniji : bool;
+        for _ in 0..10 {
+            nasledniji = *vector_iter.next().expect("Test ne deluje");
+            print!("{}, ", nasledniji);
+        };
     }
 }

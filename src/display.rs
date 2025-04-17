@@ -36,12 +36,12 @@ mod tests {
 
     #[test]
     fn printaj() -> () {
-        let mreza = Mreza::new((16,16),4);
+        let mreza = Mreza::new((16,16),40);
         print!("{}", mreza);
     }
     #[test]
     fn printaj_safe() -> () {
-        let mreza = Mreza::safe_new((10,10),0,(3,4));
+        let mreza = Mreza::safe_new((16,16),40,(1,1));
         print!("{}", mreza);
     }
 }
