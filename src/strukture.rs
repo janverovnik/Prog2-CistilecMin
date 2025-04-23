@@ -54,6 +54,18 @@ impl Tile {
             // mesto: mesto,
         }
     }
+
+    pub fn open(&mut self) -> () {
+        self.status = Status::Open  
+    }
+
+    pub fn change_flag(&mut self) -> () {
+        self.status = match self.status {
+            Status::Open =>  Status::Open,
+            Status::Closed(Mark::Flagged) => Status::Closed(Mark::NotFlagged),
+            Status::Closed(Mark::NotFlagged) => Status::Closed(Mark::Flagged),
+        }
+    }
 }
 
 use crate::strukture::Vsebina::Mina;
@@ -116,6 +128,16 @@ impl Mreza {
     pub fn je_prazno(&self,mesto:(u16,u16)) -> bool {
         !self.tiles.contains_key(&mesto)
     }
+
+    // pub fn apply_on_tile<F>(&mut self,f: F, mesto:(u16, u16)) -> ()
+    // where 
+    //     F : FnMut(&mut Tile) ->  ()  {
+    //     match self.tile(mesto) {
+    //         None => (),
+    //         Some(tile) => f(tile),
+    //     }
+    // }
+
 }
     
     #[cfg(test)]
