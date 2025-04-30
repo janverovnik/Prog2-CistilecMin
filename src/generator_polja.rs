@@ -1,9 +1,5 @@
-// use std::collections::HashMap;
-
 use rand::Rng;
-
 use crate::strukture::{Tile,Mreza};
-
 
 fn razlika(m:u16,n:u16) -> u16 {
     if m > n {
@@ -106,11 +102,11 @@ mod tests {
     fn permutacija() -> () {
         let binding = random_array(10, 3);
         let mut vector_iter = binding.iter();
-        // let mut vector_iter = random_array(42, 15).iter();
         let mut nasledniji : bool;
         for _ in 0..10 {
             nasledniji = *vector_iter.next().expect("Test ne deluje");
             print!("{}, ", nasledniji);
         };
     }
+    // Ta test je bil narejen, ker je testna funkcija printaj() v display.rs izrisala samo mine. Napaka ni bila v funkciji random_array().
 }

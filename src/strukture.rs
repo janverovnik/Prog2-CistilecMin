@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 pub enum Mark {
     Flagged,
     NotFlagged,
@@ -20,14 +19,12 @@ pub enum Vsebina {
 pub struct Tile {
     pub vsebina: Vsebina,
     pub status: Status,
-    // mesto: (u16, u16)
 }
 
 pub struct Mreza {
     pub velikost: (u16, u16),
     tiles: HashMap<(u16, u16), Tile>,
 }
-
 
 
 impl Tile {
@@ -43,7 +40,6 @@ impl Tile {
         Tile {
             vsebina: Vsebina::Mina,
             status: Status::Closed(Mark::NotFlagged),
-            // mesto: mesto,
         }
     }
     
@@ -51,11 +47,10 @@ impl Tile {
         Tile {
             vsebina: Vsebina::Stevilo(stevilo),
             status: Status::Closed(Mark::NotFlagged),
-            // mesto: mesto,
         }
     }
 
-    pub fn open(&mut self) -> () {
+    pub fn uncover(&mut self) -> () {
         self.status = Status::Open  
     }
 
@@ -67,8 +62,6 @@ impl Tile {
         }
     }
 }
-
-use crate::strukture::Vsebina::Mina;
 
 impl Mreza {
     pub fn tile(&self, mesto:(u16, u16)) -> Option<&Tile> {
@@ -82,7 +75,7 @@ impl Mreza {
     pub fn mines(&self) -> Vec<(u16, u16)> {
         let mut mine_vec = vec![];
         for ((i, j), tile) in self.tiles.iter() {
-            if tile.vsebina == Mina {
+            if tile.vsebina == Vsebina::Mina {
                 mine_vec.push((*i, *j));
             }
         }
@@ -91,7 +84,6 @@ impl Mreza {
 
     pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
         let (i,j) = mesto;
-        // let mut mozni: Vec<(u16, u16)>;
         let mut mozni = match (i,j) {
             (0,0) => vec![(0,1),(1,0),(1,1)],
             (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
@@ -111,7 +103,7 @@ impl Mreza {
             match self.tile(*sosed) {
                 None => stevec += 0,
                 Some(tile) => 
-                    if (*tile).vsebina == Mina {
+                    if (*tile).vsebina == Vsebina::Mina {
                         stevec += 1
                 }
             }
@@ -144,18 +136,3 @@ impl Mreza {
     }
 
 }
-    
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        #[test]
-        fn poizkus() {
-        let test_mreza = Mreza {
-            velikost: (123, 456),
-            tiles: HashMap::new()
-        };
-       
-    }
-}
-
-

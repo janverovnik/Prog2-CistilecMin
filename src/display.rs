@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+// #![allow(non_snake_case)]
 
 use std::fmt::{self, write, Display, Formatter};
 use crate::strukture::{Mreza, Tile};
@@ -44,4 +44,5 @@ mod tests {
         let mreza = Mreza::safe_new((16,16),40,(1,1));
         print!("{}", mreza);
     }
+    // Implementacija Display verjetno ne bo pomembna pri končnem izdelku, vendar je priročna za ugotavljanje in odpravljanje težav.
 }
