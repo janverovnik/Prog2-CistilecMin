@@ -19,7 +19,7 @@ pub enum Vsebina {
 
 pub struct Tile {
     pub vsebina: Vsebina,
-    status: Status,
+    pub status: Status,
     // mesto: (u16, u16)
 }
 
@@ -74,36 +74,37 @@ impl Mreza {
     pub fn tile(&self, mesto:(u16, u16)) -> Option<&Tile> {
         self.tiles.get(&mesto)
     }
+    
     pub fn add_tile(&mut self, tile:Tile ,mesto:(u16, u16)) -> Option<Tile>  {
         self.tiles.insert(mesto, tile)
     }
 
-    // pub fn add_tile(&mut self, tile: Tile, i: u16, j: u16) -> Option<Tile> {
-        //     self.tiles.insert((i, j), tile)
-        pub fn mines(&self) -> Vec<(u16, u16)> {
-            let mut mine_vec = vec![];
-            for ((i, j), tile) in self.tiles.iter() {
-                if tile.vsebina == Mina {
-                    mine_vec.push((*i, *j));
-                }
+    pub fn mines(&self) -> Vec<(u16, u16)> {
+        let mut mine_vec = vec![];
+        for ((i, j), tile) in self.tiles.iter() {
+            if tile.vsebina == Mina {
+                mine_vec.push((*i, *j));
             }
-            return mine_vec;
         }
-        pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
-            let (i,j) = mesto;
-            // let mut mozni: Vec<(u16, u16)>;
-            let mut mozni = match (i,j) {
-                (0,0) => vec![(0,1),(1,0),(1,1)],
-                (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
-                (i,0) => vec![(i - 1, 0), (i + 1, 0),(i - 1, 1), (i, 1), (i + 1, 1)],
-                (_,_) => vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
-                (i - 1, j), (i + 1, j),
-            (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)],
-            };
-        let keys: Vec<&(u16, u16)>  = self.tiles.keys().collect();
-        mozni.retain(|n| keys.contains(&n));
-        return mozni;
+        return mine_vec;
     }
+
+    pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
+        let (i,j) = mesto;
+        // let mut mozni: Vec<(u16, u16)>;
+        let mut mozni = match (i,j) {
+            (0,0) => vec![(0,1),(1,0),(1,1)],
+            (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
+            (i,0) => vec![(i - 1, 0), (i + 1, 0),(i - 1, 1), (i, 1), (i + 1, 1)],
+            (_,_) => vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
+            (i - 1, j), (i + 1, j),
+        (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)],
+        };
+    let keys: Vec<&(u16, u16)>  = self.tiles.keys().collect();
+    mozni.retain(|n| keys.contains(&n));
+    return mozni;
+    }
+
     pub fn pripisi_stevilo(&self, mesto:(u16, u16)) -> u8 {
         let mut stevec: u8 = 0;
         for sosed in &self.sosedje(mesto) {
@@ -129,14 +130,18 @@ impl Mreza {
         !self.tiles.contains_key(&mesto)
     }
 
-    // pub fn apply_on_tile<F>(&mut self,f: F, mesto:(u16, u16)) -> ()
-    // where 
-    //     F : FnMut(&mut Tile) ->  ()  {
-    //     match self.tile(mesto) {
-    //         None => (),
-    //         Some(tile) => f(tile),
-    //     }
-    // }
+     fn tile_mut(&mut self, mesto:(u16, u16)) -> Option<&mut Tile> {
+        self.tiles.get_mut(&mesto)
+    }   
+    
+    pub fn apply_on_tile<F>(&mut self,mut f: F, mesto:(u16, u16)) -> ()
+    where 
+        F : FnMut(&mut Tile) ->  ()  {
+        match self.tile_mut(mesto) {
+            None => (),
+            Some(tile) => f(tile),
+        }
+    }
 
 }
     
@@ -154,8 +159,3 @@ impl Mreza {
 }
 
 
-    // fn preverjaj(&self) -> bool {
-    //     match self.vsebina {
-
-    //     }
-    // }
