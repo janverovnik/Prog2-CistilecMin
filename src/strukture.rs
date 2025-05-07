@@ -111,6 +111,23 @@ impl Mreza {
         stevec
     }
     
+    pub fn sosednje_zastavice(&self, mesto:(u16, u16)) -> u8 {
+        let mut stevec: u8 = 0;
+        for sosed in &self.sosedje(mesto) {
+            match self.tile(*sosed) {
+                None => stevec += 0,
+                Some(tile) => 
+                    match tile.status {
+                        Status::Closed(Mark::Flagged) => stevec += 1,
+                        _ => ()
+                    }
+                }
+            }
+        stevec
+        }
+        
+    
+    
     pub fn prazna(velikost: (u16, u16)) -> Mreza {
         Mreza {
             velikost: velikost,
