@@ -1,4 +1,3 @@
-// use rand::Rng;
 use crate::strukture::{Tile,Mreza};
 
 fn razlika(m:u16,n:u16) -> u16 {
@@ -12,7 +11,7 @@ fn razlika(m:u16,n:u16) -> u16 {
 impl Mreza {
     pub fn new(velikost : (u16,u16), st_min: u16) -> Mreza {
         let mut mreza = Mreza::prazna(velikost);
-        let mut zaporedje = random_array(velikost.0 * velikost.1, st_min).into_iter();
+        let mut zaporedje = random_array_homemade(velikost.0 * velikost.1, st_min, 42).into_iter();
         let mut naslednji : bool;
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
@@ -47,7 +46,7 @@ impl Mreza {
         } else {
             9
         };
-        let mut zaporedje =  random_array(velikost.0 * velikost.1 - varne, st_min).into_iter();
+        let mut zaporedje =  random_array_homemade(velikost.0 * velikost.1 - varne, st_min,42).into_iter();
         let mut naslednji : bool;
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
@@ -74,34 +73,39 @@ impl Mreza {
 
 }
 
+fn random_array_homemade(mut st_vseh:u16,mut st_min:u16,seed: u64) -> Vec<bool> {
+    let mut vsi = st_vseh as u64;
+    let mut mine = st_min as u64;
+    let a: u64 = 674267;
+    let b: u64 = 10101010;
+    let mut x: u64 = seed;
+    let mut nakljucno = vec![];
 
-fn random_array(mut st_vseh:u16,mut st_min:u16) -> Vec<bool> {
-    // let mut rng = rand::rng();
-    // let mut nakljucno = vec![];
-    // loop {
-    //     if rng.random_ratio(st_min.into(),st_vseh.into()) {
-    //         nakljucno.push(true);
-    //         st_min -= 1;
-    //         st_vseh -= 1;
-    //     } else {
-    //         nakljucno.push(false);
-    //         st_vseh -= 1
-    //     }
-    //     if st_vseh == 0 {
-    //         break;
-    //     }
-    // }
-    // nakljucno
-    vec![]
+    loop {
+        x = (a*x + b) % vsi;
+        if x < mine {
+            nakljucno.push(true);
+            mine -= 1;
+            vsi -= 1;
+        } else {
+            nakljucno.push(false);
+            vsi -= 1
+        }
+        if vsi == 0 {
+            break;
+        }
+    }
+    nakljucno
 }
+
 
 #[cfg(test)]
 mod tests {
-    use super::random_array;
+    use super::random_array_homemade;
 
     #[test]
     fn permutacija() -> () {
-        let binding = random_array(10, 3);
+        let binding = random_array_homemade(10, 3,6534);
         let mut vector_iter = binding.iter();
         let mut nasledniji : bool;
         for _ in 0..10 {
