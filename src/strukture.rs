@@ -3,6 +3,7 @@ use std::collections::HashMap;
 pub enum Mark {
     Flagged,
     NotFlagged,
+    Safe,
 }
 
 pub enum Status {
@@ -50,6 +51,13 @@ impl Tile {
         }
     }
 
+    pub fn new_safe(stevilo: u8) -> Tile {
+        Tile { 
+            vsebina: Vsebina::Stevilo(0), 
+            status: Status::Closed(Mark::Safe)
+        }
+    }
+
     pub fn uncover(&mut self) -> () {
         self.status = Status::Open  
     }
@@ -59,6 +67,7 @@ impl Tile {
             Status::Open =>  Status::Open,
             Status::Closed(Mark::Flagged) => Status::Closed(Mark::NotFlagged),
             Status::Closed(Mark::NotFlagged) => Status::Closed(Mark::Flagged),
+            Status::Closed(Mark::Safe) => Status::Closed(Mark::Safe)
         }
     }
 }
