@@ -47,7 +47,7 @@ mod tests {
     }
     #[test]
     fn printaj_safe() -> () {
-        let mreza = Mreza::safe_new((16,16),40,(1,1),42);
+        let mreza = Mreza::safe_new((16,16),40,42);
         print!("{}", mreza);
     }
     // Implementacija Display verjetno ne bo pomembna pri končnem izdelku, vendar je priročna za ugotavljanje in odpravljanje težav.

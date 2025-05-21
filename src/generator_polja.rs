@@ -34,12 +34,13 @@ impl Mreza {
         mreza
     }
 
-    pub fn safe_new(velikost: (u16,u16),st_min: u16, safe_space: (u16,u16), seed : u64) -> Mreza {
+    pub fn safe_new(velikost: (u16,u16),st_min: u16, seed : u64) -> Mreza {
         let (m, n) = (velikost.0 - 1, velikost.1 - 1);
+        let safe_space = rand_safe(seed, &velikost);
         let (s0,s1) = safe_space;
         let mut mreza = Mreza::prazna(velikost);
-        // Ocaml match je superior od rust matcha
         let varne = if safe_space == (0,0) || safe_space == (m, 0) || safe_space == (0, n) || safe_space == (m, n) {
+        // Ocaml match je superior od rust matcha
             4
         } else if s0 == 0 || s0 == m || s1 == 0 || s1 == n {
             6
@@ -102,7 +103,10 @@ fn random_array_homemade(st_vseh:u16,st_min:u16,seed: u64) -> Vec<bool> {
     nakljucno
 }
 
-pub fn rand_safe(seed:u64) -> (u64,u64) {
+fn rand_safe(seed:u64, &velikost: &(u16,u16)) -> (u16,u16) {
+    let n = velikost.0 as u64;
+    let m = velikost.1 as u64;
+
     let a: u64 = 674267;
     let b: u64 = 101010;
     let m = 123456;
@@ -117,7 +121,7 @@ pub fn rand_safe(seed:u64) -> (u64,u64) {
     for _ in 0..97 {
         y = (a*y + b) % m;
     };
-    (x,y)
+    ((x % n) as u16,(y % m) as u16)
 }
 
 
