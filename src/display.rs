@@ -11,9 +11,9 @@ impl Display for Mreza {
     let mut dodatek : String;
     let velikost = self.velikost;
 
-    for i in 0..velikost.0 {
+    for j in 0..velikost.0 {
 
-        for j in 0..velikost.1 {
+        for i in 0..velikost.1 {
             dodatek = match self.tile((i,j)) {
                 None => String::from(" "),
                 Some(tile) => match *tile.status() {
