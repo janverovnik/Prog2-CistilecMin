@@ -109,17 +109,17 @@ fn rand_safe(seed:u64, &velikost: &(u16,u16)) -> (u16,u16) {
 
     let a: u64 = 674267;
     let b: u64 = 101010;
-    let m = 123456;
+    let mo = 123456;
     let mut y: u64 = seed;
 
      
     for _ in 0..97 {
-        y = (a*y + b) % m;
+        y = (a*y + b) % mo;
     }
     let x : u64 = y;
 
     for _ in 0..97 {
-        y = (a*y + b) % m;
+        y = (a*y + b) % mo;
     };
     ((x % n) as u16,(y % m) as u16)
 }

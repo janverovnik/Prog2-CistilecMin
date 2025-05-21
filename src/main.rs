@@ -12,6 +12,7 @@ fn main() {
     println!("Select seed");
 
     let mut seed = String::new();
+    let mut poteza = String::new();
 
     io::stdin()
         .read_line(&mut seed)
@@ -22,14 +23,17 @@ fn main() {
         Err(_) => 42,
     };
     
-    let mut mreza = Mreza::safe_new((16,16),40,(1,1),seed);
-    let safe = generator_polja::ra
+    let mut mreza = Mreza::safe_new((16,16),40,seed);
 
     loop {
         print!("{}", mreza);
+        println!("Naredi potezo!");
+
+        io::stdin()
+        .read_line(&mut poteza)
+        .expect("Failed to read line");
+
 
     }
-
-
 
 }
