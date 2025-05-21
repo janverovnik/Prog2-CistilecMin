@@ -6,6 +6,7 @@ use std::io;
 
 // use crate generator_polja::{safe_new};
 use crate::strukture::{Tile,Mreza};
+use crate::gameplay;
 
 
 fn main() {
@@ -33,7 +34,16 @@ fn main() {
         .read_line(&mut poteza)
         .expect("Failed to read line");
 
-
+        let pot: Option<(char, u16, u16)> = match poteza.trim().parse() {
+        Ok(num) => Some(num),
+        Err(_) => None,
+    };
+    match pot {
+        | None => continue,
+        | Some(('U', x, y)) | Some (('u', x, y)) => mreza.change_flag((x,y)),
+        | Some(('F', x, y)) | Some (('f', x, y)) => mreza.uncover_tile((x,y)),
+        | _ => continue
+    }    
     }
 
 }
