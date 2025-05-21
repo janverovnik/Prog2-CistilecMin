@@ -9,9 +9,9 @@ fn razlika(m:u16,n:u16) -> u16 {
 }
 
 impl Mreza {
-    pub fn new(velikost : (u16,u16), st_min: u16) -> Mreza {
+    pub fn new(velikost : (u16,u16), st_min: u16, seed : u64) -> Mreza {
         let mut mreza = Mreza::prazna(velikost);
-        let mut zaporedje = random_array_homemade(velikost.0 * velikost.1, st_min, 42).into_iter();
+        let mut zaporedje = random_array_homemade(velikost.0 * velikost.1, st_min, seed).into_iter();
         let mut naslednji : bool;
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
@@ -34,7 +34,7 @@ impl Mreza {
         mreza
     }
 
-    pub fn safe_new(velikost: (u16,u16),st_min: u16, safe_space: (u16,u16)) -> Mreza {
+    pub fn safe_new(velikost: (u16,u16),st_min: u16, safe_space: (u16,u16), seed : u64) -> Mreza {
         let (m, n) = (velikost.0 - 1, velikost.1 - 1);
         let (s0,s1) = safe_space;
         let mut mreza = Mreza::prazna(velikost);
@@ -46,7 +46,7 @@ impl Mreza {
         } else {
             9
         };
-        let mut zaporedje =  random_array_homemade(velikost.0 * velikost.1 - varne, st_min,42).into_iter();
+        let mut zaporedje =  random_array_homemade(velikost.0 * velikost.1 - varne, st_min,seed).into_iter();
         let mut naslednji : bool;
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
@@ -73,17 +73,20 @@ impl Mreza {
 
 }
 
-fn random_array_homemade(mut st_vseh:u16,mut st_min:u16,seed: u64) -> Vec<bool> {
+fn random_array_homemade(st_vseh:u16,st_min:u16,seed: u64) -> Vec<bool> {
     let mut vsi = st_vseh as u64;
     let mut mine = st_min as u64;
     let a: u64 = 674267;
-    let b: u64 = 10101010;
+    let b: u64 = 101010;
+    let m = 123456;
     let mut x: u64 = seed;
     let mut nakljucno = vec![];
 
     loop {
-        x = (a*x + b) % vsi;
-        if x < mine {
+        for _ in 0..97 {
+            x = (a*x + b) % m;
+        };
+        if x % vsi < mine {
             nakljucno.push(true);
             mine -= 1;
             vsi -= 1;
@@ -98,6 +101,25 @@ fn random_array_homemade(mut st_vseh:u16,mut st_min:u16,seed: u64) -> Vec<bool> 
     nakljucno
 }
 
+pub fn rand_safe(seed:u64) -> (u64,u64) {
+    let a: u64 = 674267;
+    let b: u64 = 101010;
+    let m = 123456;
+    let mut y: u64 = seed;
+
+     
+    for _ in 0..97 {
+        y = (a*y + b) % m;
+    }
+    let x : u64 = y;
+
+    for _ in 0..97 {
+        y = (a*y + b) % m;
+    };
+    (x,y)
+}
+
+
 
 #[cfg(test)]
 mod tests {
@@ -105,7 +127,7 @@ mod tests {
 
     #[test]
     fn permutacija() -> () {
-        let binding = random_array_homemade(10, 3,6534);
+        let binding = random_array_homemade(10, 3,6539);
         let mut vector_iter = binding.iter();
         let mut nasledniji : bool;
         for _ in 0..10 {
