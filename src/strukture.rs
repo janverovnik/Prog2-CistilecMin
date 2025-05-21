@@ -67,7 +67,7 @@ impl Tile {
             Status::Open =>  Status::Open,
             Status::Closed(Mark::Flagged) => Status::Closed(Mark::NotFlagged),
             Status::Closed(Mark::NotFlagged) => Status::Closed(Mark::Flagged),
-            Status::Closed(Mark::Safe) => Status::Closed(Mark::Safe)
+            Status::Closed(Mark::Safe) => panic!("Cannot change flags before game start!")
         }
     }
 }
