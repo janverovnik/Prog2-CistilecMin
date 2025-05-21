@@ -1,8 +1,9 @@
 // #![allow(non_snake_case)]
 
 use std::fmt::{self, write, Display, Formatter};
-use crate::strukture::{Mreza, Tile};
-use crate::strukture::Vsebina::{Mina,Stevilo};
+use crate::strukture::{Mark, Mreza, Tile};
+use crate::strukture::Vsebina::{Mina, Stevilo};
+use crate::strukture::Status;
 
 impl Display for Mreza {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -15,10 +16,15 @@ impl Display for Mreza {
         for j in 0..velikost.1 {
             dodatek = match self.tile((i,j)) {
                 None => String::from(" "),
-                Some(tile) => match *tile.vsebina() {
-                    Stevilo(x) => x.to_string() + " ",
-                    Mina => String::from("* "),
-                },
+                Some(tile) => match *tile.status() {
+                    Status::Open =>  match *tile.vsebina() {
+                            Stevilo(x) => x.to_string() + " ",
+                            Mina => String::from("* "),
+                    },
+                    Status::Closed(Mark::Safe) => String::from("X "),
+                    Status::Closed(Mark::NotFlagged) => String::from("□ "),
+                    Status::Closed(Mark::Flagged) => String::from("F "),
+            }
             };
             niz.push_str(&dodatek);
 
