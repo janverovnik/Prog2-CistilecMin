@@ -51,7 +51,7 @@ impl Tile {
         }
     }
 
-    pub fn new_safe(stevilo: u8) -> Tile {
+    pub fn new_safe() -> Tile {
         Tile { 
             vsebina: Vsebina::Stevilo(0), 
             status: Status::Closed(Mark::Safe)

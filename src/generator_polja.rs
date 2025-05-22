@@ -62,7 +62,7 @@ impl Mreza {
                     }
                 }
         };
-        mreza.add_tile(Tile::new_safe(0),safe_space);
+        mreza.add_tile(Tile::new_safe(), safe_space);
         for i in 0..velikost.0 {
             for j in 0..velikost.1 {
                 if mreza.je_prazno((i,j)) {

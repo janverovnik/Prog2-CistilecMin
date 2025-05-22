@@ -4,7 +4,7 @@ mod display;
 mod gameplay;
 use std::io;
 
-use crate::strukture::{Tile,Mreza};
+use crate::strukture::{Mreza, Vsebina};
 
 
 
@@ -52,7 +52,12 @@ fn main() {
         
         match pot {
             | None => continue,
-            | Some(('U', x, y)) | Some (('u', x, y)) => mreza.uncover_tile((x,y)),
+            | Some(('U', x, y)) | Some (('u', x, y)) => 
+            {mreza.uncover_tile((x,y));
+                match mreza.tile((x, y)) {
+                None => (),
+                Some(tile) => if *tile.vsebina() == Vsebina::Mina{ print!("{}\n{}\n", mreza, "KABOOM!"); break}}
+            }
             | Some(('F', x, y)) | Some (('f', x, y)) => mreza.change_flag((x,y)),
             | _ => continue
         }    
