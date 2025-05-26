@@ -26,8 +26,8 @@ fn main() {
     let mut mreza = Mreza::safe_new((16,16),40,seed);
 
     loop {
-        print!("{}", mreza);
-        println!("Naredi potezo!");
+        print!("\n{}", mreza);
+        println!("\nNaredi potezo!");
         
         let mut poteza = String::new();
 
@@ -53,7 +53,7 @@ fn main() {
         match pot {
             | None => continue,
             | Some(('U', x, y)) | Some (('u', x, y)) => 
-            {mreza.uncover_tile((x,y));
+            {mreza.uncover_tile((x,y), &mut vec![]);
                 match mreza.tile((x, y)) {
                 None => (),
                 Some(tile) => if *tile.vsebina() == Vsebina::Mina{ print!("{}\n{}\n", mreza, "KABOOM!"); break}}

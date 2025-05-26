@@ -7,13 +7,13 @@ use crate::strukture::Status;
 
 impl Display for Mreza {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let velikost = self.velikost;
     let mut niz : String = Default::default();
     let mut dodatek : String;
-    let velikost = self.velikost;
-
-    for j in 0..velikost.0 {
-
-        for i in 0..velikost.1 {
+    
+    for j in 0..velikost.1 {
+        
+        for i in 0..velikost.0 {
             dodatek = match self.tile((i,j)) {
                 None => String::from(" "),
                 Some(tile) => match *tile.status() {
@@ -29,7 +29,7 @@ impl Display for Mreza {
             niz.push_str(&dodatek);
 
         }
-        niz.push_str(&"\n".to_string());
+        niz.push_str("\n");
     
     }
     write!(f, "{}", niz)

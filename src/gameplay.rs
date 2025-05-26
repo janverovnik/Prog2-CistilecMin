@@ -1,14 +1,17 @@
 use crate::strukture::{Tile, Mreza, Vsebina};
 
 impl Mreza {
-    pub fn uncover_tile(&mut self, mesto: (u16,u16)) {
+    pub fn uncover_tile(&mut self, mesto: (u16,u16), forbidden: &mut Vec<(u16,u16)>) {
         let f = |tile: &mut Tile| {tile.uncover()};
         match self.tile(mesto) {
             None => (),
             Some(tile) => match *tile.vsebina(){
                 Vsebina::Stevilo(x) => {self.apply_on_tile(f, mesto);
+                                            (*forbidden).push(mesto);
                                             if x == 0 {for sosed in self.sosedje(mesto) {
-                                                self.apply_on_tile(f, sosed);
+                                                if !forbidden.contains(&sosed){
+                                                (*forbidden).push(sosed);
+                                                self.uncover_tile(sosed, forbidden);}
                                             }
                                         }
                 },
