@@ -23,7 +23,7 @@ fn setup_level(mut commands: Commands, asset_server : Res<AssetServer>) {
     commands.spawn(Camera2d::default());
     let sprite = (Sprite {
         image: asset_server.load("top.png"),
-        custom_size: Some(Vec2::new(35., 35.)),
+        custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
         ..Default::default()
     },
     Transform::from_translation(vec3(0., 0., 0.)));
