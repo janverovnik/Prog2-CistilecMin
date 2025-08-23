@@ -23,8 +23,9 @@ pub struct Tile {
 }
 
 pub struct Mreza {
-    pub velikost: (u16, u16),
-    tiles: HashMap<(u16, u16), Tile>,
+    pub velikost: (usize, usize),
+    // tiles: HashMap<(u16, u16), Tile>,
+    tiles: Vec<Vec<Option<Tile>>>
 }
 
 
@@ -61,7 +62,7 @@ impl Tile {
     pub fn uncover(&mut self) -> () {
         self.status = Status::Open  
     }
-
+    
     pub fn change_flag(&mut self) -> () {
         self.status = match self.status {
             Status::Open =>  Status::Open,
@@ -72,41 +73,66 @@ impl Tile {
     }
 }
 
+impl Clone for Tile {
+    fn clone(&self) -> Self {
+        self.clone()
+    }
+}
+
 impl Mreza {
-    pub fn tile(&self, mesto:(u16, u16)) -> Option<&Tile> {
-        self.tiles.get(&mesto)
+    pub fn tile(&self, (i,j):(usize, usize)) -> Option<&Tile> {
+        self.tiles[i][j].as_ref()
     }
     
-    pub fn add_tile(&mut self, tile:Tile ,mesto:(u16, u16)) -> Option<Tile>  {
-        self.tiles.insert(mesto, tile)
+    pub fn add_tile(&mut self, tile:Tile ,(i,j):(usize, usize)) -> Option<Tile>  {
+        self.tiles[i][j] = Some(tile);
+        None
     }
 
-    pub fn mines(&self) -> Vec<(u16, u16)> {
+    pub fn mines(&self) -> Vec<(usize, usize)> {
         let mut mine_vec = vec![];
-        for ((i, j), tile) in self.tiles.iter() {
-            if tile.vsebina == Vsebina::Mina {
-                mine_vec.push((*i, *j));
+        let (m,n) = self.velikost;
+        for i in 0..m {
+            for j in 0..n {
+                match self.tile((i,j)) {
+                    Some(tile) => 
+                    if (*tile).vsebina == Vsebina::Mina {mine_vec.push((i, j))},
+                    _ => (),
+                }
             }
         }
-        return mine_vec;
+        return mine_vec
     }
+    
 
-    pub fn sosedje(&self, mesto:(u16, u16)) -> Vec<(u16, u16)> {
+    pub fn sosedje(&self, mesto:(usize, usize)) -> Vec<(usize, usize)> {
+        let (m_plus,n_plus) = self.velikost;
+        let (m,n) = (m_plus-1,n_plus-1);
         let (i,j) = mesto;
-        let mut mozni = match (i,j) {
+        let mozni = if (i,j) == (m,0) {
+            vec![(m-1,0),(m-1,1),(m,1)]
+        } else if (i,j) == (0,n) {
+            vec![(0,n-1), (1,n-1), (1,n)]
+        } else if (i,j) == (m,n) {
+            vec![(m-1,n),(m-1,n-1),(m,n-1)]
+        } else if i == m {
+            vec![(i,j-1), (i-1,j-1), (i-1,j), (i-1,j+1), (i,j+1)]
+        } else if j == n {
+            vec![(i-1,j), (i-1,j-1), (i,j-1), (i+1,j-1), (i+1,j)]
+        } else {match (i,j) {
             (0,0) => vec![(0,1),(1,0),(1,1)],
             (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
             (i,0) => vec![(i - 1, 0), (i + 1, 0),(i - 1, 1), (i, 1), (i + 1, 1)],
             (_,_) => vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
             (i - 1, j), (i + 1, j),
         (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)],
+        }
         };
-    let keys: Vec<&(u16, u16)>  = self.tiles.keys().collect();
-    mozni.retain(|n| keys.contains(&n));
-    return mozni;
+    return mozni
     }
+    // Ocaml match VELIKO BOLJ superioren od rust matcha
 
-    pub fn pripisi_stevilo(&self, mesto:(u16, u16)) -> u8 {
+    pub fn pripisi_stevilo(&self, mesto:(usize, usize)) -> u8 {
         let mut stevec: u8 = 0;
         for sosed in &self.sosedje(mesto) {
             match self.tile(*sosed) {
@@ -120,7 +146,7 @@ impl Mreza {
         stevec
     }
     
-    pub fn sosednje_zastavice(&self, mesto:(u16, u16)) -> u8 {
+    pub fn sosednje_zastavice(&self, mesto:(usize, usize)) -> u8 {
         let mut stevec: u8 = 0;
         for sosed in &self.sosedje(mesto) {
             match self.tile(*sosed) {
@@ -135,24 +161,26 @@ impl Mreza {
         stevec
         }
         
-    
-    
-    pub fn prazna(velikost: (u16, u16)) -> Mreza {
+
+    pub fn prazna(velikost: (usize, usize)) -> Mreza {
         Mreza {
             velikost: velikost,
-            tiles: HashMap::new(),
+            tiles:  vec![vec![None;velikost.1];velikost.0],
         }
     }
 
-    pub fn je_prazno(&self,mesto:(u16,u16)) -> bool {
-        !self.tiles.contains_key(&mesto)
+    pub fn je_prazno(&self,mesto:(usize,usize)) -> bool {
+        match self.tile(mesto) {
+            None => true,
+            Some(_) => false,
+        }
     }
 
-     fn tile_mut(&mut self, mesto:(u16, u16)) -> Option<&mut Tile> {
-        self.tiles.get_mut(&mesto)
+     fn tile_mut(&mut self, mesto:(usize, usize)) -> Option<&mut Tile> {
+        self.tiles[mesto.0][mesto.1].as_mut()
     }   
     
-    pub fn apply_on_tile<F>(&mut self,mut f: F, mesto:(u16, u16)) -> ()
+    pub fn apply_on_tile<F>(&mut self,mut f: F, mesto:(usize, usize)) -> ()
     where 
         F : FnMut(&mut Tile) ->  ()  {
         match self.tile_mut(mesto) {
@@ -162,3 +190,5 @@ impl Mreza {
     }
 
 }
+
+

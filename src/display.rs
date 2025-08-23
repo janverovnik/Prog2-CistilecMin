@@ -50,5 +50,10 @@ mod tests {
         let mreza = Mreza::safe_new((16,16),40,42);
         print!("{}", mreza);
     }
+    #[test]
+    fn printaj_prazno() -> () {
+        print!("{}", Mreza::prazna((8,8)))
+    }
+    
     // Implementacija Display verjetno ne bo pomembna pri končnem izdelku, vendar je priročna za ugotavljanje in odpravljanje težav.
 }

@@ -1,7 +1,7 @@
 use crate::strukture::{Tile, Mreza, Vsebina};
 
 impl Mreza {
-    pub fn uncover_tile(&mut self, mesto: (u16,u16), forbidden: &mut Vec<(u16,u16)>) {
+    pub fn uncover_tile(&mut self, mesto: (usize,usize), forbidden: &mut Vec<(usize,usize)>) {
         let f = |tile: &mut Tile| {tile.uncover()};
         match self.tile(mesto) {
             None => (),
@@ -23,12 +23,12 @@ impl Mreza {
         }
     }
 
-    pub fn change_flag(&mut self, mesto: (u16,u16)) {
+    pub fn change_flag(&mut self, mesto: (usize,usize)) {
         let f = |tile: &mut Tile| {tile.change_flag()};
         self.apply_on_tile(f, mesto)
     } 
 
-    pub fn sure_uncover(&mut self, mesto: (u16,u16)) { // če imaš dva zaprta sosednja tile-a flaggana za mino lahko na tile dvakrat pritisneš da se odprejo ostali (at your own peril)W
+    pub fn sure_uncover(&mut self, mesto: (usize,usize)) { // če imaš dva zaprta sosednja tile-a flaggana za mino lahko na tile dvakrat pritisneš da se odprejo ostali (at your own peril)W
         match self.tile(mesto) {
             None => (),
             Some(&ref tile) => 

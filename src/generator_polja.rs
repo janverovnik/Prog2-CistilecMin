@@ -1,6 +1,6 @@
 use crate::strukture::{Tile,Mreza};
 
-fn razlika(m:u16,n:u16) -> u16 {
+fn razlika(m:usize,n:usize) -> usize {
     if m > n {
         m - n
     } else {
@@ -9,7 +9,7 @@ fn razlika(m:u16,n:u16) -> u16 {
 }
 
 impl Mreza {
-    pub fn new(velikost : (u16,u16), st_min: u16, seed : u64) -> Mreza {
+    pub fn new(velikost : (usize,usize), st_min: usize, seed : u64) -> Mreza {
         let mut mreza = Mreza::prazna(velikost);
         let mut zaporedje = random_array_homemade(velikost.0 * velikost.1, st_min, seed).into_iter();
         let mut naslednji : bool;
@@ -34,7 +34,7 @@ impl Mreza {
         mreza
     }
 
-    pub fn safe_new(velikost: (u16,u16),st_min: u16, seed : u64) -> Mreza {
+    pub fn safe_new(velikost: (usize,usize),st_min: usize, seed : u64) -> Mreza {
         let (m, n) = (velikost.0 - 1, velikost.1 - 1);
         let safe_space = rand_safe(seed, &velikost);
         let (s0,s1) = safe_space;
@@ -75,7 +75,7 @@ impl Mreza {
 
 }
 
-fn random_array_homemade(st_vseh:u16,st_min:u16,seed: u64) -> Vec<bool> {
+fn random_array_homemade(st_vseh:usize,st_min:usize,seed: u64) -> Vec<bool> {
     let mut vsi = st_vseh as u64;
     let mut mine = st_min as u64;
     let a: u64 = 674267;
@@ -103,7 +103,7 @@ fn random_array_homemade(st_vseh:u16,st_min:u16,seed: u64) -> Vec<bool> {
     nakljucno
 }
 
-fn rand_safe(seed:u64, &velikost: &(u16,u16)) -> (u16,u16) {
+fn rand_safe(seed:u64, &velikost: &(usize,usize)) -> (usize,usize) {
     let n = velikost.0 as u64;
     let m = velikost.1 as u64;
 
@@ -121,7 +121,7 @@ fn rand_safe(seed:u64, &velikost: &(u16,u16)) -> (u16,u16) {
     for _ in 0..97 {
         y = (a*y + b) % mo;
     };
-    ((x % n) as u16,(y % m) as u16)
+    ((x % n) as usize,(y % m) as usize)
 }
 
 

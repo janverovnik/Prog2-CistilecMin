@@ -73,7 +73,7 @@ fn setup_level(mut commands: Commands, asset_server : Res<AssetServer>) {
 //             _ => (Ok('X'),Ok(42),Ok(42)),
 //         };
 
-//         let pot : Option<(char,u16,u16)> = match (crka,x,y) {
+//         let pot : Option<(char,usize,usize)> = match (crka,x,y) {
 //             (Ok(crka),Ok(x),Ok(y)) => Some((crka,x,y)),
 //             _ => None,
 //         };
@@ -90,3 +90,4 @@ fn setup_level(mut commands: Commands, asset_server : Res<AssetServer>) {
 //             | _ => continue
 //         }    
 //     }
+// }
