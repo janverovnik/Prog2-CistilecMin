@@ -191,4 +191,27 @@ impl Mreza {
 
 }
 
+pub struct Tezavnost {
+    pub velikost : (usize, usize),
+    pub st_min : usize,
+}
 
+pub const EAZY : Tezavnost = Tezavnost {
+    velikost : (8,8),
+    st_min : 12,
+};
+
+pub const MEDIUM : Tezavnost = Tezavnost {
+    velikost : (16,16),
+    st_min : 35,
+};
+
+pub const HARD : Tezavnost = Tezavnost {
+    velikost : (28,16),
+    st_min : 80,
+};
+
+pub const INSANE : Tezavnost = Tezavnost {
+    velikost : (28,20),
+    st_min : 120,
+};
