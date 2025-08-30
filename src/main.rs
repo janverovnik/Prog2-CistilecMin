@@ -6,8 +6,7 @@ mod gameplay;
 
 use std::io;
 // use bevy::{prelude::*};
-use crate::strukture::{Mreza, Vsebina};
-
+use crate::strukture::*;
 use bevy::prelude::*;
 
 const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
@@ -34,6 +33,8 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
+
+
 
 mod splash {
     use bevy::prelude::*;
@@ -63,7 +64,7 @@ struct SplashTimer(Timer);
  // Newtype to use a `Timer` for this screen as a resource
 
 fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-        let icon = asset_server.load(r"mina.png");
+        let icon = asset_server.load("mina.png");
         // Display the logo
         commands.spawn((
             Node {
@@ -103,6 +104,8 @@ mod game {
         prelude::*,
     };
 
+    use crate::strukture::Mreza;
+
     use super::{despawn_screen, GameState, TEXT_COLOR};
 
  pub fn game_plugin(app: &mut App) {
@@ -119,80 +122,28 @@ mod game {
 
 fn game_setup(
         mut commands: Commands,
+        asset_server: Res<AssetServer>
     ) {
-        commands.spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                // center children
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                ..default()
+        let mut mreza = Mreza::safe_new((8, 8), 12, 42);
+
+        for j in 0..mreza.velikost.0 {
+        
+        for i in 0..mreza.velikost.1 {
+            commands.spawn((Sprite {
+            image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
+            custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
+            ..Default::default()
             },
-            OnGameScreen,
-            children![(
-                Node {
-                    // This will display its children in a column, from top to bottom
-                    flex_direction: FlexDirection::Column,
-                    // `align_items` will align children on the cross axis. Here the main axis is
-                    // vertical (column), so the cross axis is horizontal. This will center the
-                    // children
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::BLACK),
-                children![
-                    (
-                        Text::new("Will be back to the menu shortly..."),
-                        TextFont {
-                            font_size: 67.0,
-                            ..default()
-                        },
-                        TextColor(TEXT_COLOR),
-                        Node {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        },
-                    ),
-                    (
-                        Text::default(),
-                        Node {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        },
-                        children![
-                            (
-                                TextSpan("Tukaj bi moral biti display_quality".to_string()),
-                                TextFont {
-                                    font_size: 50.0,
-                                    ..default()
-                                },
-                                TextColor(BLUE.into()),
-                            ),
-                            (
-                                TextSpan::new(" - "),
-                                TextFont {
-                                    font_size: 50.0,
-                                    ..default()
-                                },
-                                TextColor(TEXT_COLOR),
-                            ),
-                            (
-                                TextSpan("Tukaj bi moral biti volume".to_string()),
-                                TextFont {
-                                    font_size: 50.0,
-                                    ..default()
-                                },
-                                TextColor(LIME.into()),
-                            ),
-                        ]
-                    ),
-                ]
-            )],
-        ));
-        // Spawn a 5 seconds timer to trigger going back to the menu
-        commands.insert_resource(GameTimer(Timer::from_seconds(5.0, TimerMode::Once)));
-    }
+            Transform::from_translation(vec3((j as f32) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
+            // + 0.5 ker buffer
+            }
+            };
+            
+        }
+    
+    
+
+    
 
 fn game(
         time: Res<Time>,

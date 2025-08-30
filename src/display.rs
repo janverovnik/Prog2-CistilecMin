@@ -5,15 +5,16 @@ use crate::strukture::{Mark, Mreza, Tile};
 use crate::strukture::Vsebina::{Mina, Stevilo};
 use crate::strukture::Status;
 
-
-fn png_select(tile: Tile) -> String{
-    match tile.status() {
-       Status::Open => match tile.vsebina {
+impl Tile {
+pub fn png_select(&self) -> String{
+    match self.status() {
+       Status::Open => match self.vsebina {
             Mina => String::from("mina.png"),
             Stevilo(x) => format!("{x}.png")
        },
        Status::Closed(mark) => if *mark == Mark::Flagged {String::from("flag.png")} else if *mark == Mark::NotFlagged {String::from("top.png")} else {String::from("safe.png")}
     }
+}
 }
 
 impl Display for Mreza {
