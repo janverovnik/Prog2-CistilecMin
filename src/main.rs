@@ -317,7 +317,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         MenuButtonAction::Eazy,
                         children![
                             (
-                                Text::new("Eazy"),
+                                Text::new("Easy"),
                                 button_text_font.clone(),
                                 TextColor(TEXT_COLOR),
                             ),
