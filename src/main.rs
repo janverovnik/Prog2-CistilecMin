@@ -5,89 +5,462 @@ mod gameplay;
 
 
 use std::io;
-use bevy::{prelude::*};
+// use bevy::{prelude::*};
 use crate::strukture::{Mreza, Vsebina};
 
+use bevy::prelude::*;
 
+const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
-fn main() {
-    let mut app = App::new();
-    app.add_plugins(DefaultPlugins
-                    .set(ImagePlugin::default_nearest())); // default_nearest je za pixel art pomemben
-    app.add_systems(Startup, setup_level);
-    app.run();
- }
-
-fn setup_level(mut commands: Commands, asset_server : Res<AssetServer>) {
-    commands.insert_resource(ClearColor(Color::srgb(0.827, 0.82, 0.82)));
-    commands.spawn(Camera2d::default());
-    let sprite = (Sprite {
-        image: asset_server.load("top.png"),
-        custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
-        ..Default::default()
-    },
-    Transform::from_translation(vec3(0., 0., 0.)));
-    let sprite2 = (Sprite {
-        image: asset_server.load("top.png"),
-        custom_size: Some(Vec2::new(35., 35.)),
-        ..Default::default()
-    },
-    Transform::from_translation(vec3(35.5, 0., 0.)));
-    commands.spawn(sprite);
-    commands.spawn(sprite2);
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum GameState {
+    #[default]
+    Splash,
+    Menu,
+    Game,
 }
 
-// println!("Select seed");
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        // Insert as resource the initial value for the settings resources
+        .init_state::<GameState>()
+        .add_systems(Startup, setup)
+        // Adds the plugins for each state
+        .add_plugins((splash::splash_plugin, menu::menu_plugin, game::game_plugin))
+        .run();
+}
 
-//     let mut seed = String::new();
-    
-//     io::stdin()
-//     .read_line(&mut seed)
-//     .expect("Failed to read line");
-    
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2d);
+}
 
-//     let seed: u64 = match seed.trim().parse() {
-//         Ok(num) => num,
-//         Err(_) => 42,
-//     };
-    
-//     let mut mreza = Mreza::safe_new((16,16),40,seed);
+mod splash {
+    use bevy::prelude::*;
 
-//     loop {
-//         print!("\n{}", mreza);
-//         println!("\nNaredi potezo!");
-        
-//         let mut poteza = String::new();
+    use super::{despawn_screen, GameState};
 
-//         io::stdin()
-//         .read_line(&mut poteza)
-//         .expect("Failed to read line");
+    // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
+    pub fn splash_plugin(app: &mut App) {
+        // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
+        app
+            // When entering the state, spawn everything needed for this screen
+            .add_systems(OnEnter(GameState::Splash), splash_setup)
+            // While in this state, run the `countdown` system
+            .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
+            // When exiting the state, despawn everything that was spawned for this screen
+            .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
+    }
 
-//         let mut iter = poteza.split_whitespace();
-//         let crka_opt = iter.next();
-//         let x_opt = iter.next();
-//         let y_opt = iter.next();
+// Tag component used to tag entities added on the splash screen
+#[derive(Component)]
+struct OnSplashScreen;
 
-//         let (crka,x,y) = match (crka_opt,x_opt,y_opt) {
-//             (Some(crka),Some(x),Some(y)) => (crka.parse(),x.parse(),y.parse()),
-//             _ => (Ok('X'),Ok(42),Ok(42)),
-//         };
+     // Newtype to use a `Timer` for this screen as a resource
+#[derive(Resource, Deref, DerefMut)]
+struct SplashTimer(Timer);
 
-//         let pot : Option<(char,usize,usize)> = match (crka,x,y) {
-//             (Ok(crka),Ok(x),Ok(y)) => Some((crka,x,y)),
-//             _ => None,
-//         };
-        
-//         match pot {
-//             | None => continue,
-//             | Some(('U', x, y)) | Some (('u', x, y)) => 
-//             {mreza.uncover_tile((x,y), &mut vec![]);
-//                 match mreza.tile((x, y)) {
-//                 None => (),
-//                 Some(tile) => if *tile.vsebina() == Vsebina::Mina{ print!("{}\n{}\n", mreza, "KABOOM!"); break}}
-//             }
-//             | Some(('F', x, y)) | Some (('f', x, y)) => mreza.change_flag((x,y)),
-//             | _ => continue
-//         }    
-//     }
-// }
+ // Newtype to use a `Timer` for this screen as a resource
+
+fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+        let icon = asset_server.load(r"mina.png");
+        // Display the logo
+        commands.spawn((
+            Node {
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            OnSplashScreen,
+            children![(
+                ImageNode::new(icon),
+                Node {
+                    // This will set the logo to be 200px wide, and auto adjust its height
+                    width: Val::Px(200.0),
+                    ..default()
+                },
+            )],
+        ));
+         commands.insert_resource(SplashTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+    }
+
+fn countdown(
+        mut game_state: ResMut<NextState<GameState>>,
+        time: Res<Time>,
+        mut timer: ResMut<SplashTimer>,
+    ) {
+        if timer.tick(time.delta()).finished() {
+            game_state.set(GameState::Menu);
+        }
+    }
+}
+
+mod game {
+    use bevy::{
+        color::palettes::basic::{BLUE, LIME},
+        prelude::*,
+    };
+
+    use super::{despawn_screen, GameState, TEXT_COLOR};
+
+ pub fn game_plugin(app: &mut App) {
+        app.add_systems(OnEnter(GameState::Game), game_setup)
+            .add_systems(Update, game.run_if(in_state(GameState::Game)))
+            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
+    }
+
+#[derive(Component)]
+    struct OnGameScreen;
+
+  #[derive(Resource, Deref, DerefMut)]
+    struct GameTimer(Timer);
+
+fn game_setup(
+        mut commands: Commands,
+    ) {
+        commands.spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                // center children
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            OnGameScreen,
+            children![(
+                Node {
+                    // This will display its children in a column, from top to bottom
+                    flex_direction: FlexDirection::Column,
+                    // `align_items` will align children on the cross axis. Here the main axis is
+                    // vertical (column), so the cross axis is horizontal. This will center the
+                    // children
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::BLACK),
+                children![
+                    (
+                        Text::new("Will be back to the menu shortly..."),
+                        TextFont {
+                            font_size: 67.0,
+                            ..default()
+                        },
+                        TextColor(TEXT_COLOR),
+                        Node {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        },
+                    ),
+                    (
+                        Text::default(),
+                        Node {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        },
+                        children![
+                            (
+                                TextSpan("Tukaj bi moral biti display_quality".to_string()),
+                                TextFont {
+                                    font_size: 50.0,
+                                    ..default()
+                                },
+                                TextColor(BLUE.into()),
+                            ),
+                            (
+                                TextSpan::new(" - "),
+                                TextFont {
+                                    font_size: 50.0,
+                                    ..default()
+                                },
+                                TextColor(TEXT_COLOR),
+                            ),
+                            (
+                                TextSpan("Tukaj bi moral biti volume".to_string()),
+                                TextFont {
+                                    font_size: 50.0,
+                                    ..default()
+                                },
+                                TextColor(LIME.into()),
+                            ),
+                        ]
+                    ),
+                ]
+            )],
+        ));
+        // Spawn a 5 seconds timer to trigger going back to the menu
+        commands.insert_resource(GameTimer(Timer::from_seconds(5.0, TimerMode::Once)));
+    }
+
+fn game(
+        time: Res<Time>,
+        mut game_state: ResMut<NextState<GameState>>,
+        mut timer: ResMut<GameTimer>,
+    ) {
+        if timer.tick(time.delta()).finished() {
+            game_state.set(GameState::Menu);
+        }
+    }
+}
+
+mod menu {
+    use bevy::{
+        app::AppExit,
+        color::palettes::css::CRIMSON,
+        ecs::spawn::{SpawnIter, SpawnWith},
+        prelude::*,
+    };
+
+use super::{despawn_screen, GameState , TEXT_COLOR};
+
+pub fn menu_plugin(app: &mut App) {
+        app
+            .init_state::<MenuState>()
+            .add_systems(OnEnter(GameState::Menu), menu_setup)
+            .add_systems(OnEnter(MenuState::Main), main_menu_setup)
+            .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
+            .add_systems(
+                Update,
+                (menu_action, button_system).run_if(in_state(GameState::Menu)),
+            );
+    }
+
+    #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+    enum MenuState {
+        Main,
+        Custom,
+        #[default]
+        Disabled,
+    }
+
+    #[derive(Component)]
+    struct OnMainMenuScreen;
+
+    const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+    const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+    const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
+    const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+
+    #[derive(Component)]
+    struct SelectedOption;
+
+#[derive(Component)]
+    enum MenuButtonAction {
+        Eazy,
+        Medium,
+        Hard,
+        Insane,
+        Custom,
+        BackToMainMenu,
+        Quit,
+    }
+
+fn button_system(
+        mut interaction_query: Query<
+            (&Interaction, &mut BackgroundColor, Option<&SelectedOption>),
+            (Changed<Interaction>, With<Button>),
+        >,
+    ){
+        for (interaction, mut background_color, selected) in &mut interaction_query {
+            *background_color = match (*interaction, selected) {
+                (Interaction::Pressed, _) | (Interaction::None, Some(_)) => PRESSED_BUTTON.into(),
+                (Interaction::Hovered, Some(_)) => HOVERED_PRESSED_BUTTON.into(),
+                (Interaction::Hovered, None) => HOVERED_BUTTON.into(),
+                (Interaction::None, None) => NORMAL_BUTTON.into(),
+            }
+        }
+    }
+
+
+fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
+        menu_state.set(MenuState::Main);
+    }
+
+fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let button_node = Node {
+            width: Val::Px(300.0),
+            height: Val::Px(65.0),
+            margin: UiRect::all(Val::Px(20.0)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        };  
+        let button_icon_node = Node {
+            width: Val::Px(30.0),
+            // This takes the icons out of the flexbox flow, to be positioned exactly
+            position_type: PositionType::Absolute,
+            // The icon will be close to the left border of the button
+            left: Val::Px(10.0),
+            ..default()
+        };
+        let button_text_font = TextFont {
+            font_size: 33.0,
+            ..default()
+        };        
+
+        // let right_icon = asset_server.load(r"2.png");
+        // let wrench_icon = asset_server.load(r"3.png");
+        // let exit_icon = asset_server.load(r"4.png");
+
+        commands.spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            OnMainMenuScreen,
+            children![(
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(CRIMSON.into()),
+                children![
+                    // Display the game name
+                    (
+                        Text::new("Cistilec min"),
+                        TextFont {
+                            font_size: 67.0,
+                            ..default()
+                        },
+                        TextColor(TEXT_COLOR),
+                        Node {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        },
+                    ),
+                    (
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Eazy,
+                        children![
+                            (
+                                Text::new("Eazy"),
+                                button_text_font.clone(),
+                                TextColor(TEXT_COLOR),
+                            ),
+                        ]
+                    ),
+                    (
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Medium,
+                        children![
+                            (
+                                Text::new("Medium"),
+                                button_text_font.clone(),
+                                TextColor(TEXT_COLOR),
+                            ),
+                        ]
+                    ),
+                    (
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Hard,
+                        children![
+                            (
+                                Text::new("Hard"),
+                                button_text_font.clone(),
+                                TextColor(TEXT_COLOR),
+                            ),
+                        ]
+                    ),
+                    (
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Insane,
+                        children![
+                            (
+                                Text::new("Insane"),
+                                button_text_font.clone(),
+                                TextColor(TEXT_COLOR),
+                            ),
+                        ]
+                    ),
+                    (
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Custom,
+                        children![
+                            (
+                                Text::new("Custom"),
+                                button_text_font.clone(),
+                                TextColor(TEXT_COLOR),
+                            ),
+                        ]
+                    ),
+
+                     (
+                        Button,
+                        button_node,
+                        BackgroundColor(NORMAL_BUTTON),
+                        MenuButtonAction::Quit,
+                        children![
+                            (Text::new("Quit"), button_text_font, TextColor(TEXT_COLOR),),
+                    ]
+                ),
+            ]
+        )],
+    ));
+}
+
+fn menu_action(
+        interaction_query: Query<
+            (&Interaction, &MenuButtonAction),
+            (Changed<Interaction>, With<Button>),
+        >,
+        mut app_exit_events: EventWriter<AppExit>,
+        mut menu_state: ResMut<NextState<MenuState>>,
+        mut game_state: ResMut<NextState<GameState>>,
+    ) {
+        for (interaction, menu_button_action) in &interaction_query {
+            if *interaction == Interaction::Pressed {
+                match menu_button_action {
+                    MenuButtonAction::Quit => {
+                        app_exit_events.write(AppExit::Success);
+                    }
+                    MenuButtonAction::Eazy => {
+                        game_state.set(GameState::Game);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::Medium => {
+                        game_state.set(GameState::Game);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::Hard => {
+                        game_state.set(GameState::Game);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::Insane => {
+                        game_state.set(GameState::Game);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::Custom => {
+                        game_state.set(GameState::Game);
+                        menu_state.set(MenuState::Disabled);
+                    }
+                    MenuButtonAction::BackToMainMenu => {
+                        game_state.set(GameState::Menu);
+                        menu_state.set(MenuState::Main);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
+    for entity in &to_despawn {
+        commands.entity(entity).despawn();
+    }
+}

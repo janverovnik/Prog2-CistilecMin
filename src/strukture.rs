@@ -75,9 +75,10 @@ impl Tile {
 
 impl Clone for Tile {
     fn clone(&self) -> Self {
-        self.clone()
+        Tile { vsebina: Vsebina::Mina, status: Status::Open }
     }
 }
+// Clone nima nobene pomembne naloge, mora le biti definirano
 
 impl Mreza {
     pub fn tile(&self, (i,j):(usize, usize)) -> Option<&Tile> {
