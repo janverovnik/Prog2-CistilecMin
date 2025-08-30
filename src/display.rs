@@ -5,6 +5,17 @@ use crate::strukture::{Mark, Mreza};
 use crate::strukture::Vsebina::{Mina, Stevilo};
 use crate::strukture::Status;
 
+
+fn png_select(tile: Tile) -> String{
+    match tile.status() {
+       Status::Open => match tile.vsebina {
+            Mina => String::from("mina.png"),
+            Stevilo(x) => format!("{x}.png")
+       },
+       Status::Closed(mark) => if *mark == Mark::Flagged {String::from("flag.png")} else if *mark == Mark::NotFlagged {String::from("top.png")} else {String::from("safe.png")}
+    }
+}
+
 impl Display for Mreza {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let velikost = self.velikost;
