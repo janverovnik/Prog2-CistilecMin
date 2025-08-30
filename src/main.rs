@@ -19,10 +19,37 @@ enum GameState {
     Game,
 }
 
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+struct Tezavnost {
+    velikost: (u64,u64),
+    st_min: u64,
+}
+
+pub const EAZY : Tezavnost = Tezavnost {
+    velikost : (8,8),
+    st_min : 12,
+};
+
+pub const MEDIUM : Tezavnost = Tezavnost {
+    velikost : (16,16),
+    st_min : 35,
+};
+
+pub const HARD : Tezavnost = Tezavnost {
+    velikost : (28,16),
+    st_min : 80,
+};
+
+pub const INSANE : Tezavnost = Tezavnost {
+    velikost : (28,20),
+    st_min : 120,
+};
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         // Insert as resource the initial value for the settings resources
+        .insert_resource(Tezavnost{velikost: (8,8),st_min: 10})
         .init_state::<GameState>()
         .add_systems(Startup, setup)
         // Adds the plugins for each state
@@ -164,6 +191,8 @@ mod menu {
         prelude::*,
     };
 
+use crate::{EAZY, MEDIUM, HARD, INSANE};
+
 use super::{despawn_screen, GameState , TEXT_COLOR};
 
 pub fn menu_plugin(app: &mut App) {
@@ -250,10 +279,6 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             font_size: 33.0,
             ..default()
         };        
-
-        // let right_icon = asset_server.load(r"2.png");
-        // let wrench_icon = asset_server.load(r"3.png");
-        // let exit_icon = asset_server.load(r"4.png");
 
         commands.spawn((
             Node {
@@ -365,6 +390,8 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
+use crate::Tezavnost;
+
 fn menu_action(
         interaction_query: Query<
             (&Interaction, &MenuButtonAction),
@@ -373,6 +400,7 @@ fn menu_action(
         mut app_exit_events: EventWriter<AppExit>,
         mut menu_state: ResMut<NextState<MenuState>>,
         mut game_state: ResMut<NextState<GameState>>,
+        mut tezavnost: ResMut<Tezavnost>,
     ) {
         for (interaction, menu_button_action) in &interaction_query {
             if *interaction == Interaction::Pressed {
@@ -382,18 +410,22 @@ fn menu_action(
                     }
                     MenuButtonAction::Eazy => {
                         game_state.set(GameState::Game);
+                        *tezavnost = EAZY;
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::Medium => {
                         game_state.set(GameState::Game);
+                        *tezavnost = MEDIUM;
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::Hard => {
                         game_state.set(GameState::Game);
+                        *tezavnost = HARD;
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::Insane => {
                         game_state.set(GameState::Game);
+                        *tezavnost = INSANE;
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::Custom => {
