@@ -1,7 +1,7 @@
 // #![allow(non_snake_case)]
 
 use std::fmt::{self, Display};
-use crate::strukture::{Mark, Mreza};
+use crate::strukture::{Mark, Mreza, Tile};
 use crate::strukture::Vsebina::{Mina, Stevilo};
 use crate::strukture::Status;
 

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[derive(PartialEq)]
 pub enum Mark {
     Flagged,
     NotFlagged,
