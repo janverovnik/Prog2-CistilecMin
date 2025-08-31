@@ -229,26 +229,23 @@ use crate::Tezavnost;
             custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
             ..Default::default()
             },
-            Transform::from_translation(vec3((j as f32) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
+            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
             // + 0.5 ker buffer
             }
             };
             
         }
-    
-    
 
-    
 
-fn game(
-        // time: Res<Time>,
-        // mut game_state: ResMut<NextState<GameState>>,
-        // mut timer: ResMut<GameTimer>,
+ fn game(
+    //     time: Res<Time>,
+    //     mut game_state: ResMut<NextState<GameState>>,
+    //     mut timer: ResMut<GameTimer>,
     ) {
-        // if timer.tick(time.delta()).finished() {
-        //     game_state.set(GameState::Menu);
-        // }
-    }
+    //     if timer.tick(time.delta()).finished() {
+    //         game_state.set(GameState::Menu);
+    //     }
+     }
 }
 
 mod menu {
@@ -385,7 +382,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         MenuButtonAction::Eazy,
                         children![
                             (
-                                Text::new("Eazy"),
+                                Text::new("Easy"),
                                 button_text_font.clone(),
                                 TextColor(TEXT_COLOR),
                             ),
