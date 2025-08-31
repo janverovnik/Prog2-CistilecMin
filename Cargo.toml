@@ -9,5 +9,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 bevy = "0.16.1"
 
-
+[profile.dev.package."*"]
+opt-level = 3
 

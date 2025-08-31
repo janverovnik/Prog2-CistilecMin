@@ -4,7 +4,7 @@ mod display;
 mod gameplay;
 
 
-use std::io;
+use std::{default, io};
 // use bevy::{prelude::*};
 use crate::strukture::*;
 use bevy::prelude::*;
@@ -102,7 +102,7 @@ fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             OnSplashScreen,
-            children![(
+            children![( 
                 ImageNode::new(icon),
                 Node {
                     // This will set the logo to be 200px wide, and auto adjust its height
@@ -125,31 +125,99 @@ fn countdown(
     }
 }
 
+#[derive(Event)]
+struct LeftClick((u64,u64));
+
+#[derive(Event)]
+struct RightClick((u64,u64));
+
+#[derive(Event)]
+struct Uncover((u64,u64));
+
+#[derive(Event)]
+struct Flag((u64,u64));
+
+#[derive(Component)]
+struct Tile {
+    vsebina: strukture::Tile,
+    covered: Handle<Image>,
+    uncovered: Handle<Image>,
+    flaged: Handle<Image>,
+    pozicija: (u64,u64),
+}
+
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)] enum TileState {
+    #[default]
+    Covered,
+    Uncovered,
+    Flagged,
+}
+
+#[derive(Event)] struct TileClick {
+    entity: Entity,
+    mouse_button: MouseButton,
+}
+
+fn tile_interaction_system(
+    mut commands: Commands,
+    mut interaction_query: Query<
+        (Entity, &Interaction, &mut TileState),
+        (Changed<Interaction>, With<Tile>),
+    >,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    mut tile_click_events: EventWriter<TileClick>,
+) {
+    for (entity, interaction, mut tile_state) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                if mouse_button_input.just_pressed(MouseButton::Left) {
+                    tile_click_events.write(TileClick {
+                        entity,
+                        mouse_button: MouseButton::Left,
+                    });
+                } else if mouse_button_input.just_pressed(MouseButton::Right) {
+                    tile_click_events.write(TileClick {
+                        entity,
+                        mouse_button: MouseButton::Right,
+                    });
+                }
+            }
+            _ => {}
+        }
+        
+        commands.entity(entity).insert(*tile_state);
+    }
+}
+
+
 mod game {
     use bevy::{
         color::palettes::basic::{BLUE, LIME},
         prelude::*,
     };
-
+    
     use crate::strukture::Mreza;
-
+    
     use super::{despawn_screen, GameState, TEXT_COLOR};
-
- pub fn game_plugin(app: &mut App) {
+    
+    pub fn game_plugin(app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), game_setup)
-            .add_systems(Update, game.run_if(in_state(GameState::Game)))
+        .add_systems(Update, game.run_if(in_state(GameState::Game)))
             .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
-
+    
 #[derive(Component)]
-    struct OnGameScreen;
+struct OnGameScreen;
+    
+#[derive(Resource, Deref, DerefMut)]
+struct GameTimer(Timer);
+    
+use crate::Tezavnost;
 
-  #[derive(Resource, Deref, DerefMut)]
-    struct GameTimer(Timer);
-
-fn game_setup(
+    fn game_setup(
         mut commands: Commands,
-        asset_server: Res<AssetServer>
+        asset_server: Res<AssetServer>,
+        tezavnost: Res<Tezavnost>,
     ) {
         let mut mreza = Mreza::safe_new((8, 8), 12, 42);
 
@@ -173,13 +241,13 @@ fn game_setup(
     
 
 fn game(
-        time: Res<Time>,
-        mut game_state: ResMut<NextState<GameState>>,
-        mut timer: ResMut<GameTimer>,
+        // time: Res<Time>,
+        // mut game_state: ResMut<NextState<GameState>>,
+        // mut timer: ResMut<GameTimer>,
     ) {
-        if timer.tick(time.delta()).finished() {
-            game_state.set(GameState::Menu);
-        }
+        // if timer.tick(time.delta()).finished() {
+        //     game_state.set(GameState::Menu);
+        // }
     }
 }
 
@@ -273,7 +341,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             position_type: PositionType::Absolute,
             // The icon will be close to the left border of the button
             left: Val::Px(10.0),
-            ..default()
+            ..default() 
         };
         let button_text_font = TextFont {
             font_size: 33.0,
