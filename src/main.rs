@@ -253,7 +253,8 @@ struct OnGameScreen;
     
 #[derive(Resource, Deref, DerefMut)]
 struct GameTimer(Timer);
-    
+
+use bevy::time;
 use crate::Tezavnost;
 use crate::Tile;
 use crate::GltfHandle;
@@ -262,9 +263,10 @@ use crate::GltfHandle;
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         tezavnost: Res<Tezavnost>,
+        time: Res<Time>
     ) {
 
-        let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, 42);
+        let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
 
         for i in 0..mreza.velikost.0 {
         
