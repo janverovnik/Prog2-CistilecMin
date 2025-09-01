@@ -1,27 +1,31 @@
 use std::collections::HashMap;
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy,Debug,Eq)]
 pub enum Mark {
     Flagged,
     NotFlagged,
     Safe,
 }
-
+#[derive(Clone,Copy,Debug,Eq,PartialEq)]
 pub enum Status {
     Open,
     Closed(Mark),
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy,Debug,Eq)]
 pub enum Vsebina {
     Stevilo(u8),
     Mina,
 }
 
+use crate::{Resource,Component};
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 pub struct Tile {
     pub vsebina: Vsebina,
     pub status: Status,
 }
+
+    
 
 pub struct Mreza {
     pub velikost: (usize, usize),
@@ -73,13 +77,6 @@ impl Tile {
         }
     }
 }
-
-impl Clone for Tile {
-    fn clone(&self) -> Self {
-        Tile { vsebina: Vsebina::Mina, status: Status::Open }
-    }
-}
-// Clone nima nobene pomembne naloge, mora le biti definirano
 
 impl Mreza {
     pub fn tile(&self, (i,j):(usize, usize)) -> Option<&Tile> {

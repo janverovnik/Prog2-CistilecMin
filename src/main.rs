@@ -4,7 +4,7 @@ mod display;
 mod gameplay;
 
 
-use std::io;
+use std::{default, io};
 // use bevy::{prelude::*};
 use crate::strukture::*;
 use bevy::prelude::*;
@@ -21,8 +21,8 @@ enum GameState {
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 struct Tezavnost {
-    velikost: (u64,u64),
-    st_min: u64,
+    velikost: (usize,usize),
+    st_min: usize,
 }
 
 pub const EAZY : Tezavnost = Tezavnost {
@@ -102,7 +102,7 @@ fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             OnSplashScreen,
-            children![(
+            children![( 
                 ImageNode::new(icon),
                 Node {
                     // This will set the logo to be 200px wide, and auto adjust its height
@@ -125,58 +125,192 @@ fn countdown(
     }
 }
 
+#[derive(Event)]
+struct LeftClick((u64,u64));
+
+#[derive(Event)]
+struct RightClick((u64,u64));
+
+#[derive(Event)]
+struct Uncover((u64,u64));
+
+#[derive(Event)]
+struct Flag((u64,u64));
+
+#[derive(Component)]
+struct Tile {
+    vsebina: strukture::Tile,
+    covered: Handle<Image>,
+    uncovered: Handle<Image>,
+    flaged: Handle<Image>,
+    pozicija: (usize,usize),
+}
+
+#[derive(Bundle)]
+struct TileWithSprite {
+    tile : Tile,
+    sprite : Sprite,
+}
+
+
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
+enum TileState {
+    #[default]
+    Covered,
+    Uncovered,
+    Flagged,
+}
+
+#[derive(Event)] 
+struct TileClick {
+    entity: Entity,
+    mouse_button: MouseButton,
+}
+
+fn tile_interaction_system(
+    mut commands: Commands,
+    mut interaction_query: Query<
+        (Entity, &Interaction, &mut TileState),
+        (Changed<Interaction>, With<Tile>),
+    >,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    mut tile_click_events: EventWriter<TileClick>,
+) {
+    for (entity, interaction, mut tile_state) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                if mouse_button_input.just_pressed(MouseButton::Left) {
+                    tile_click_events.write(TileClick {
+                        entity,
+                        mouse_button: MouseButton::Left,
+                    });
+                } else if mouse_button_input.just_pressed(MouseButton::Right) {
+                    tile_click_events.write(TileClick {
+                        entity,
+                        mouse_button: MouseButton::Right,
+                    });
+                };
+                print!("Test");
+            }
+            _ => {print!("test2")}
+        }
+        
+        commands.entity(entity).insert(*tile_state);
+    }
+}
+
+#[derive(Component)]
+struct GltfHandle(Handle<Image>);
+
+
+
+
+fn handle_tile_clicks(
+    mut tile_click_events: EventReader<TileClick>,
+    mut tile_query: Query<(&mut Tile, &mut GltfHandle)>,
+) {
+    for event in tile_click_events.read() {
+        if let Ok((mut tile, mut texture)) = tile_query.get_mut(event.entity) {
+                *texture = GltfHandle(tile.uncovered.clone());
+            println!(
+                "Tile Position:  {:?}",
+                tile.pozicija
+            );
+        }
+    }
+}
+
+
+// fn change_tiles_system (
+//     sprites: Res<MySprites>, query: Query<&mut ImageHandle, With<MyEntity>>
+// ) {
+
+// }
+
+
 mod game {
     use bevy::{
         color::palettes::basic::{BLUE, LIME},
         prelude::*,
     };
-
-    use crate::strukture::Mreza;
-
+    
+    use crate::{handle_tile_clicks, strukture::Mreza, TileState, TileClick, tile_interaction_system};
+    
     use super::{despawn_screen, GameState, TEXT_COLOR};
-
- pub fn game_plugin(app: &mut App) {
+    
+    pub fn game_plugin(app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), game_setup)
-            .add_systems(Update, game.run_if(in_state(GameState::Game)))
-            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
+        .add_systems(Update, game.run_if(in_state(GameState::Game)))
+        .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
+        .add_event::<TileClick>()
+        .add_systems(Update, (handle_tile_clicks, tile_interaction_system));
     }
+    
+
 
 #[derive(Component)]
-    struct OnGameScreen;
+struct OnGameScreen;
+    
+#[derive(Resource, Deref, DerefMut)]
+struct GameTimer(Timer);
+    
+use crate::Tezavnost;
+use crate::Tile;
 
-  #[derive(Resource, Deref, DerefMut)]
-    struct GameTimer(Timer);
-
-fn game_setup(
+    fn game_setup(
         mut commands: Commands,
-        asset_server: Res<AssetServer>
+        asset_server: Res<AssetServer>,
+        tezavnost: Res<Tezavnost>,
     ) {
-        let mut mreza = Mreza::safe_new((8, 8), 12, 42);
+
+        let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, 42);
 
         for j in 0..mreza.velikost.0 {
         
         for i in 0..mreza.velikost.1 {
-            commands.spawn((Sprite {
-            image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
-            custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
-            ..Default::default()
+            let new_tile = Option::expect(mreza.tile((i,j)), "ERROR: narobe generirana mreža");
+            let (covered_png,uncovered_png, flaged_png) = new_tile.png_selections();
+            commands.spawn(
+            (
+                Sprite {
+                    image: asset_server.load(covered_png.clone()),
+                    custom_size: Some(Vec2::new(35., 35.)),
+                    ..Default::default()
             },
-            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
-            // + 0.5 ker buffer
-            }
+            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)),
+                Tile 
+                {
+                    vsebina : *new_tile,
+                    covered : asset_server.load(covered_png),
+                    uncovered :  asset_server.load(uncovered_png),
+                    flaged :  asset_server.load(flaged_png),
+                    pozicija : (i,j),
+                },
+                TileState::Covered,
+         
+            ));
             };
             
         }
+    }
+
+// commands.spawn((Sprite {
+//             image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
+//             custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
+//             ..Default::default()
+//             },
+//             Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
+//             // + 0.5 ker buffer
+
 
 
  fn game(
-    //     time: Res<Time>,
-    //     mut game_state: ResMut<NextState<GameState>>,
-    //     mut timer: ResMut<GameTimer>,
+        keys: Res<ButtonInput<KeyCode>>,
+        mut game_state: ResMut<NextState<GameState>>,
     ) {
-    //     if timer.tick(time.delta()).finished() {
-    //         game_state.set(GameState::Menu);
-    //     }
+        if keys.just_pressed(KeyCode::Escape) {
+            game_state.set(GameState::Menu);
+        }
      }
 }
 
@@ -190,7 +324,7 @@ mod menu {
 
 use crate::{EAZY, MEDIUM, HARD, INSANE};
 
-use super::{despawn_screen, GameState , TEXT_COLOR};
+use super::{despawn_screen, GameState , TEXT_COLOR, Tile};
 
 pub fn menu_plugin(app: &mut App) {
         app
@@ -198,6 +332,7 @@ pub fn menu_plugin(app: &mut App) {
             .add_systems(OnEnter(GameState::Menu), menu_setup)
             .add_systems(OnEnter(MenuState::Main), main_menu_setup)
             .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
+            .add_systems(OnExit(GameState::Game), despawn_screen::<Tile>)
             .add_systems(
                 Update,
                 (menu_action, button_system).run_if(in_state(GameState::Menu)),
@@ -270,7 +405,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             position_type: PositionType::Absolute,
             // The icon will be close to the left border of the button
             left: Val::Px(10.0),
-            ..default()
+            ..default() 
         };
         let button_text_font = TextFont {
             font_size: 33.0,
@@ -364,7 +499,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         button_node.clone(),
                         BackgroundColor(NORMAL_BUTTON),
                         MenuButtonAction::Custom,
-                        children![
+                        children![  
                             (
                                 Text::new("Custom"),
                                 button_text_font.clone(),
