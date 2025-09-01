@@ -21,8 +21,8 @@ enum GameState {
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 struct Tezavnost {
-    velikost: (u64,u64),
-    st_min: u64,
+    velikost: (usize,usize),
+    st_min: usize,
 }
 
 pub const EAZY : Tezavnost = Tezavnost {
@@ -143,17 +143,26 @@ struct Tile {
     covered: Handle<Image>,
     uncovered: Handle<Image>,
     flaged: Handle<Image>,
-    pozicija: (u64,u64),
+    pozicija: (usize,usize),
 }
 
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)] enum TileState {
+#[derive(Bundle)]
+struct TileWithSprite {
+    tile : Tile,
+    sprite : Sprite,
+}
+
+
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
+enum TileState {
     #[default]
     Covered,
     Uncovered,
     Flagged,
 }
 
-#[derive(Event)] struct TileClick {
+#[derive(Event)] 
+struct TileClick {
     entity: Entity,
     mouse_button: MouseButton,
 }
@@ -189,6 +198,31 @@ fn tile_interaction_system(
     }
 }
 
+// pub fn handle_tile_clicks(
+//     mut tile_click_events: EventReader<TileClick>,
+//     mut tile_query: Query<(&mut Tile, &mut Handle<Image>)>,
+// ) {
+//     for event in tile_click_events.read() {
+//         if let Ok((mut tile, mut texture)) = tile_query.get_mut(event.entity) {
+//             // Toggle the revealed state and change sprite
+//             tile.is_revealed = !tile.is_revealed;
+            
+//             // Update the sprite based on the new state
+//             if tile.is_revealed {
+//                 *texture = tile.sprite_b.clone();
+//             } else {
+//                 *texture = tile.sprite_a.clone();
+//             }
+            
+//             println!(
+//                 "Tile clicked with {:?}, now {}",
+//                 event.mouse_button,
+//                 if tile.is_revealed { "revealed" } else { "hidden" }
+//             );
+//         }
+//     }
+// }
+
 
 mod game {
     use bevy::{
@@ -196,7 +230,7 @@ mod game {
         prelude::*,
     };
     
-    use crate::strukture::Mreza;
+    use crate::{strukture::Mreza, TileState};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
@@ -206,6 +240,8 @@ mod game {
             .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
     
+
+
 #[derive(Component)]
 struct OnGameScreen;
     
@@ -213,38 +249,66 @@ struct OnGameScreen;
 struct GameTimer(Timer);
     
 use crate::Tezavnost;
+use crate::Tile;
 
     fn game_setup(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         tezavnost: Res<Tezavnost>,
     ) {
-        let mut mreza = Mreza::safe_new((8, 8), 12, 42);
+
+        let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, 42);
 
         for j in 0..mreza.velikost.0 {
         
         for i in 0..mreza.velikost.1 {
-            commands.spawn((Sprite {
-            image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
-            custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
-            ..Default::default()
+            let new_tile = Option::expect(mreza.tile((i,j)), "ERROR: narobe generirana mreža");
+            let (covered_png,uncovered_png, flaged_png) = new_tile.png_selections();
+            commands.spawn(
+            (
+                Sprite {
+                    image: asset_server.load(covered_png.clone()),
+                    custom_size: Some(Vec2::new(35., 35.)),
+                    ..Default::default()
             },
-            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
-            // + 0.5 ker buffer
-            }
+            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)),
+                Tile 
+                {
+                    vsebina : *new_tile,
+                    covered : asset_server.load(covered_png),
+                    uncovered :  asset_server.load(uncovered_png),
+                    flaged :  asset_server.load(flaged_png),
+                    pozicija : (i,j),
+                },
+                TileState::Covered,
+         
+            ));
             };
             
         }
+    }
+
+fn tile_interaction_system() {
+
+}
+
+// commands.spawn((Sprite {
+//             image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
+//             custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
+//             ..Default::default()
+//             },
+//             Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
+//             // + 0.5 ker buffer
+
 
 
  fn game(
-    //     time: Res<Time>,
-    //     mut game_state: ResMut<NextState<GameState>>,
-    //     mut timer: ResMut<GameTimer>,
+        keys: Res<ButtonInput<KeyCode>>,
+        mut game_state: ResMut<NextState<GameState>>,
     ) {
-    //     if timer.tick(time.delta()).finished() {
-    //         game_state.set(GameState::Menu);
-    //     }
+        if keys.just_pressed(KeyCode::Escape) {
+            game_state.set(GameState::Menu);
+        }
      }
 }
 
@@ -258,7 +322,7 @@ mod menu {
 
 use crate::{EAZY, MEDIUM, HARD, INSANE};
 
-use super::{despawn_screen, GameState , TEXT_COLOR};
+use super::{despawn_screen, GameState , TEXT_COLOR, Tile};
 
 pub fn menu_plugin(app: &mut App) {
         app
@@ -266,6 +330,7 @@ pub fn menu_plugin(app: &mut App) {
             .add_systems(OnEnter(GameState::Menu), menu_setup)
             .add_systems(OnEnter(MenuState::Main), main_menu_setup)
             .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
+            .add_systems(OnExit(GameState::Game), despawn_screen::<Tile>)
             .add_systems(
                 Update,
                 (menu_action, button_system).run_if(in_state(GameState::Menu)),
@@ -432,7 +497,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         button_node.clone(),
                         BackgroundColor(NORMAL_BUTTON),
                         MenuButtonAction::Custom,
-                        children![
+                        children![  
                             (
                                 Text::new("Custom"),
                                 button_text_font.clone(),
