@@ -256,6 +256,7 @@ struct GameTimer(Timer);
     
 use crate::Tezavnost;
 use crate::Tile;
+use crate::GltfHandle;
 
     fn game_setup(
         mut commands: Commands,
@@ -265,9 +266,9 @@ use crate::Tile;
 
         let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, 42);
 
-        for j in 0..mreza.velikost.0 {
+        for i in 0..mreza.velikost.0 {
         
-        for i in 0..mreza.velikost.1 {
+        for j in 0..mreza.velikost.1 {
             let new_tile = Option::expect(mreza.tile((i,j)), "ERROR: narobe generirana mreža");
             let (covered_png,uncovered_png, flaged_png) = new_tile.png_selections();
             commands.spawn(
@@ -277,16 +278,18 @@ use crate::Tile;
                     custom_size: Some(Vec2::new(35., 35.)),
                     ..Default::default()
             },
-            Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)),
+            Transform::from_translation(vec3((i as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (j as f32 + 0.5) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5 , 0.)),
                 Tile 
                 {
                     vsebina : *new_tile,
-                    covered : asset_server.load(covered_png),
+                    covered : asset_server.load(&covered_png),
                     uncovered :  asset_server.load(uncovered_png),
                     flaged :  asset_server.load(flaged_png),
                     pozicija : (i,j),
                 },
                 TileState::Covered,
+                Interaction::default(),
+                GltfHandle(asset_server.load(covered_png.clone())),
          
             ));
             };
