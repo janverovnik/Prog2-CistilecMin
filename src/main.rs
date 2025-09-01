@@ -189,38 +189,42 @@ fn tile_interaction_system(
                         entity,
                         mouse_button: MouseButton::Right,
                     });
-                }
+                };
+                print!("Test");
             }
-            _ => {}
+            _ => {print!("test2")}
         }
         
         commands.entity(entity).insert(*tile_state);
     }
 }
 
-// pub fn handle_tile_clicks(
-//     mut tile_click_events: EventReader<TileClick>,
-//     mut tile_query: Query<(&mut Tile, &mut Handle<Image>)>,
+#[derive(Component)]
+struct GltfHandle(Handle<Image>);
+
+
+
+
+fn handle_tile_clicks(
+    mut tile_click_events: EventReader<TileClick>,
+    mut tile_query: Query<(&mut Tile, &mut GltfHandle)>,
+) {
+    for event in tile_click_events.read() {
+        if let Ok((mut tile, mut texture)) = tile_query.get_mut(event.entity) {
+                *texture = GltfHandle(tile.uncovered.clone());
+            println!(
+                "Tile Position:  {:?}",
+                tile.pozicija
+            );
+        }
+    }
+}
+
+
+// fn change_tiles_system (
+//     sprites: Res<MySprites>, query: Query<&mut ImageHandle, With<MyEntity>>
 // ) {
-//     for event in tile_click_events.read() {
-//         if let Ok((mut tile, mut texture)) = tile_query.get_mut(event.entity) {
-//             // Toggle the revealed state and change sprite
-//             tile.is_revealed = !tile.is_revealed;
-            
-//             // Update the sprite based on the new state
-//             if tile.is_revealed {
-//                 *texture = tile.sprite_b.clone();
-//             } else {
-//                 *texture = tile.sprite_a.clone();
-//             }
-            
-//             println!(
-//                 "Tile clicked with {:?}, now {}",
-//                 event.mouse_button,
-//                 if tile.is_revealed { "revealed" } else { "hidden" }
-//             );
-//         }
-//     }
+
 // }
 
 
@@ -230,14 +234,16 @@ mod game {
         prelude::*,
     };
     
-    use crate::{strukture::Mreza, TileState};
+    use crate::{handle_tile_clicks, strukture::Mreza, TileState, TileClick, tile_interaction_system};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
     pub fn game_plugin(app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), game_setup)
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
-            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
+        .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
+        .add_event::<TileClick>()
+        .add_systems(Update, (handle_tile_clicks, tile_interaction_system));
     }
     
 
@@ -287,10 +293,6 @@ use crate::Tile;
             
         }
     }
-
-fn tile_interaction_system() {
-
-}
 
 // commands.spawn((Sprite {
 //             image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
