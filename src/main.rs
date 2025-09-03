@@ -4,8 +4,6 @@ mod display;
 mod gameplay;
 
 
-use std::{default, io};
-// use bevy::{prelude::*};
 use crate::strukture::*;
 use bevy::prelude::*;
 
@@ -48,11 +46,9 @@ pub const INSANE : Tezavnost = Tezavnost {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        // Insert as resource the initial value for the settings resources
         .insert_resource(Tezavnost{velikost: (8,8),st_min: 10})
         .init_state::<GameState>()
         .add_systems(Startup, setup)
-        // Adds the plugins for each state
         .add_plugins((splash::splash_plugin, menu::menu_plugin, game::game_plugin))
         .run();
 }
@@ -139,71 +135,12 @@ struct BevyTile {
     is_odprto: bool,
 }
 
-#[derive(Bundle)]
-struct TileWithSprite {
-    tile : Tile,
-    sprite : Sprite,
-}
-
-
-#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq)]
-enum TileState {
-    #[default]
-    Covered,
-    Uncovered,
-    Flagged,
-}
-
-#[derive(Event)] 
-struct TileClick {
-    entity: Entity,
-    mouse_button: MouseButton,
-}
-
-fn tile_interaction_system(
-    mut commands: Commands,
-    mut interaction_query: Query<
-        (Entity, &Interaction, &mut TileState),
-        (Changed<Interaction>, With<Tile>),
-    >,
-    mouse_button_input: Res<ButtonInput<MouseButton>>,
-    mut tile_click_events: EventWriter<TileClick>,
-) {
-    for (entity, interaction, mut tile_state) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                if mouse_button_input.just_pressed(MouseButton::Left) {
-                    tile_click_events.write(TileClick {
-                        entity,
-                        mouse_button: MouseButton::Left,
-                    });
-                } else if mouse_button_input.just_pressed(MouseButton::Right) {
-                    tile_click_events.write(TileClick {
-                        entity,
-                        mouse_button: MouseButton::Right,
-                    });
-                };
-                print!("Test");
-            }
-            _ => {print!("test2")}
-        }
-        
-        commands.entity(entity).insert(*tile_state);
-    }
-}
-
-#[derive(Component)]
-struct GltfHandle(Handle<Image>);
-
-
-
-
 mod game {
     use bevy::{
         color::palettes::basic::{BLUE, LIME}, math::ops::abs, prelude::*
     };
     
-    use crate::{ handle_click, strukture::Mreza, tile_interaction_system, LeftClick, RightClick, TileClick, TileState};
+    use crate::{ handle_click, strukture::Mreza, LeftClick, RightClick};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
@@ -212,11 +149,8 @@ mod game {
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
         .add_systems(Update, handle_click)
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
-        .add_event::<TileClick>()
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
-        .add_systems(Update, (tile_interaction_system))
-        // .add_systems(Update, odpri.run_if(on_event::<LeftClick>))
         .add_observer(odpri_tile)
         .add_observer(flag_polje)
         
@@ -231,13 +165,10 @@ fn odpri_tile (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
 ) {
-    // println!("Vsaj to");
-
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
         if (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
-            // println!("Nekej deluje");
             sprite.image = asset_server.load(tile.uncovered.clone());
             tile.is_odprto = true;
         }
@@ -249,8 +180,6 @@ fn flag_polje (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
 ) {
-    // println!("Vsaj to");
-
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
@@ -263,10 +192,6 @@ fn flag_polje (
                 sprite.image = asset_server.load(tile.flaged.clone());
                 tile.is_flaged = true;
             }
-            
-        
-            // println!("Nekej deluje");
-            
         }
     }
 }
@@ -306,7 +231,7 @@ use crate::BevyTile;
                     custom_size: Some(Vec2::new(35., 35.)),
                     ..Default::default()
             },
-            Transform::from_translation(vec3((i as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (j as f32 + 0.5) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5 , 0.)),
+            Transform::from_translation(vec3((i as f32 + 0.5) * 35. - (mreza.velikost.0 as f32) / 2.0 * 35., (j as f32 + 0.5) * 35. - (mreza.velikost.1 as f32) / 2.0 * 35. , 0.)),
                 BevyTile 
                 {
                     vsebina : *new_tile,
@@ -314,7 +239,7 @@ use crate::BevyTile;
                     uncovered : uncovered_png,
                     flaged : flaged_png,
                     pozicija : (i,j),
-                    global_pozicija: (vec2((i as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (j as f32 + 0.5) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5)),
+                    global_pozicija: (vec2((i as f32 + 0.5) * 35. - (mreza.velikost.0 as f32) / 2.0 * 35., (j as f32 + 0.5) * 35. - (mreza.velikost.1 as f32) / 2.0 * 35.)),
                     is_flaged : false,
                     is_odprto : false,
                 },
@@ -324,7 +249,6 @@ use crate::BevyTile;
             
         }
     }
-
 
 
  fn game(
@@ -342,7 +266,6 @@ struct LeftClick {poz: Vec2}
 
 #[derive(Event)]
 struct RightClick {poz: Vec2}
-
 
 
 fn handle_click (
@@ -371,7 +294,6 @@ fn handle_click (
         }
 
     }
-
 
 mod menu {
     use bevy::{
@@ -449,7 +371,7 @@ fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
         menu_state.set(MenuState::Main);
     }
 
-fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn main_menu_setup(mut commands: Commands) {
     let button_node = Node {
             width: Val::Px(300.0),
             height: Val::Px(65.0),
@@ -460,9 +382,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         };  
         let button_icon_node = Node {
             width: Val::Px(30.0),
-            // This takes the icons out of the flexbox flow, to be positioned exactly
             position_type: PositionType::Absolute,
-            // The icon will be close to the left border of the button
             left: Val::Px(10.0),
             ..default() 
         };
@@ -488,7 +408,6 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 BackgroundColor(CRIMSON.into()),
                 children![
-                    // Display the game name
                     (
                         Text::new("Cistilec min"),
                         TextFont {
