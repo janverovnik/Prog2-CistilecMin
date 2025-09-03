@@ -125,25 +125,18 @@ fn countdown(
     }
 }
 
-#[derive(Event)]
-struct LeftClick((u64,u64));
 
-#[derive(Event)]
-struct RightClick((u64,u64));
-
-#[derive(Event)]
-struct Uncover((u64,u64));
-
-#[derive(Event)]
-struct Flag((u64,u64));
 
 #[derive(Component)]
-struct Tile {
+struct BevyTile {
     vsebina: strukture::Tile,
-    covered: Handle<Image>,
-    uncovered: Handle<Image>,
-    flaged: Handle<Image>,
+    covered: String,
+    uncovered: String,
+    flaged: String,
     pozicija: (usize,usize),
+    global_pozicija: Vec2,
+    is_flaged: bool,
+    is_odprto: bool,
 }
 
 #[derive(Bundle)]
@@ -205,47 +198,80 @@ struct GltfHandle(Handle<Image>);
 
 
 
-fn handle_tile_clicks(
-    mut tile_click_events: EventReader<TileClick>,
-    mut tile_query: Query<(&mut Tile, &mut GltfHandle)>,
-) {
-    for event in tile_click_events.read() {
-        if let Ok((mut tile, mut texture)) = tile_query.get_mut(event.entity) {
-                *texture = GltfHandle(tile.uncovered.clone());
-            println!(
-                "Tile Position:  {:?}",
-                tile.pozicija
-            );
-        }
-    }
-}
-
-
-// fn change_tiles_system (
-//     sprites: Res<MySprites>, query: Query<&mut ImageHandle, With<MyEntity>>
-// ) {
-
-// }
-
-
 mod game {
     use bevy::{
-        color::palettes::basic::{BLUE, LIME},
-        prelude::*,
+        color::palettes::basic::{BLUE, LIME}, math::ops::abs, prelude::*
     };
     
-    use crate::{handle_tile_clicks, strukture::Mreza, TileState, TileClick, tile_interaction_system};
+    use crate::{ handle_click, strukture::Mreza, tile_interaction_system, LeftClick, RightClick, TileClick, TileState};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
     pub fn game_plugin(app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), game_setup)
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
+        .add_systems(Update, handle_click)
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
         .add_event::<TileClick>()
-        .add_systems(Update, (handle_tile_clicks, tile_interaction_system));
+        .add_event::<LeftClick>()
+        .add_event::<RightClick>()
+        .add_systems(Update, (tile_interaction_system))
+        // .add_systems(Update, odpri.run_if(on_event::<LeftClick>))
+        .add_observer(odpri_tile)
+        .add_observer(flag_polje)
+        
+        ;
+        
     }
-    
+
+
+
+fn odpri_tile (
+    trigger: Trigger<LeftClick>,
+    mut query : Query<(&mut Sprite, &mut BevyTile)>,
+    asset_server: Res<AssetServer>,
+) {
+    // println!("Vsaj to");
+
+    for (mut sprite,mut tile) in &mut query  {
+        let poz = trigger.event().poz;
+        let tile_poz = tile.global_pozicija;
+        if (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
+            // println!("Nekej deluje");
+            sprite.image = asset_server.load(tile.uncovered.clone());
+            tile.is_odprto = true;
+        }
+    }
+}
+
+fn flag_polje (
+    trigger: Trigger<RightClick>,
+    mut query : Query<(&mut Sprite, &mut BevyTile)>,
+    asset_server: Res<AssetServer>,
+) {
+    // println!("Vsaj to");
+
+    for (mut sprite,mut tile) in &mut query  {
+        let poz = trigger.event().poz;
+        let tile_poz = tile.global_pozicija;
+        if (tile.is_odprto == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
+
+            if tile.is_flaged {
+                sprite.image = asset_server.load(tile.covered.clone());
+                tile.is_flaged = false;
+            } else {
+                sprite.image = asset_server.load(tile.flaged.clone());
+                tile.is_flaged = true;
+            }
+            
+        
+            // println!("Nekej deluje");
+            
+        }
+    }
+}
+
+
 
 
 #[derive(Component)]
@@ -256,8 +282,8 @@ struct GameTimer(Timer);
 
 use bevy::time;
 use crate::Tezavnost;
-use crate::Tile;
-use crate::GltfHandle;
+use crate::BevyTile;
+
 
     fn game_setup(
         mut commands: Commands,
@@ -281,31 +307,23 @@ use crate::GltfHandle;
                     ..Default::default()
             },
             Transform::from_translation(vec3((i as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (j as f32 + 0.5) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5 , 0.)),
-                Tile 
+                BevyTile 
                 {
                     vsebina : *new_tile,
-                    covered : asset_server.load(&covered_png),
-                    uncovered :  asset_server.load(uncovered_png),
-                    flaged :  asset_server.load(flaged_png),
+                    covered : covered_png,
+                    uncovered : uncovered_png,
+                    flaged : flaged_png,
                     pozicija : (i,j),
+                    global_pozicija: (vec2((i as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (j as f32 + 0.5) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5)),
+                    is_flaged : false,
+                    is_odprto : false,
                 },
-                TileState::Covered,
-                Interaction::default(),
-                GltfHandle(asset_server.load(covered_png.clone())),
          
             ));
             };
             
         }
     }
-
-// commands.spawn((Sprite {
-//             image: asset_server.load((Option::expect(mreza.tile((i, j)), "ERROR: narobe generirana mreža")).png_select()),
-//             custom_size: Some(Vec2::new(35., 35.)), // velikost 35. zgleda najbolj optimalna
-//             ..Default::default()
-//             },
-//             Transform::from_translation(vec3((j as f32 + 0.5) * 35.5 - (mreza.velikost.0 as f32) / 2.0 * 35.5, (i as f32) * 35.5 - (mreza.velikost.1 as f32) / 2.0 * 35.5, 0.)))); 
-//             // + 0.5 ker buffer
 
 
 
@@ -319,6 +337,42 @@ use crate::GltfHandle;
      }
 }
 
+#[derive(Event)]
+struct LeftClick {poz: Vec2}
+
+#[derive(Event)]
+struct RightClick {poz: Vec2}
+
+
+
+fn handle_click (
+     mouse_button_input: Res<ButtonInput<MouseButton>>,
+    camera: Single<(&Camera, &GlobalTransform)>,
+    windows: Query<&Window>,
+    mut commands: Commands,
+) {
+    let Ok(windows) = windows.single() else {
+        return;
+    };
+    let (camera, camera_transform) = *camera;
+    if let Some(pos) = windows
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
+        .map(|ray| ray.origin.truncate())
+    {
+        if mouse_button_input.just_pressed(MouseButton::Left) {
+            commands.trigger(LeftClick {poz:pos});
+            // println!("LeftClick");
+        }
+        if mouse_button_input.just_pressed(MouseButton::Right) {
+            commands.trigger(RightClick {poz:pos});
+            //  println!("RightClick");
+        }
+        }
+
+    }
+
+
 mod menu {
     use bevy::{
         app::AppExit,
@@ -327,7 +381,7 @@ mod menu {
         prelude::*,
     };
 
-use crate::{EAZY, MEDIUM, HARD, INSANE};
+use crate::{BevyTile, EAZY, HARD, INSANE, MEDIUM};
 
 use super::{despawn_screen, GameState , TEXT_COLOR, Tile};
 
@@ -337,7 +391,7 @@ pub fn menu_plugin(app: &mut App) {
             .add_systems(OnEnter(GameState::Menu), menu_setup)
             .add_systems(OnEnter(MenuState::Main), main_menu_setup)
             .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
-            .add_systems(OnExit(GameState::Game), despawn_screen::<Tile>)
+            .add_systems(OnExit(GameState::Game), despawn_screen::<BevyTile>)
             .add_systems(
                 Update,
                 (menu_action, button_system).run_if(in_state(GameState::Menu)),

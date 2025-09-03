@@ -124,6 +124,12 @@ fn rand_safe(seed:u64, &velikost: &(usize,usize)) -> (usize,usize) {
     ((x % n) as usize,(y % m) as usize)
 }
 
+pub fn rand_u64((i,j):(usize,usize)) -> usize {
+    rand_safe(42,&(i,j)).0
+}
+
+
+
 
 
 #[cfg(test)]
