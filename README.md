@@ -6,3 +6,8 @@ Avtorja projekta :
 
 * Matej Knap
 * Jan Verovnik
+
+## Navodila za igranje
+Levi klik: odpre polje
+Desni klik: postavi zastavico
+Esc: odidi iz igre
