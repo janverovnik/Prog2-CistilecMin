@@ -137,10 +137,10 @@ struct BevyTile {
 
 mod game {
     use bevy::{
-        color::palettes::basic::{BLUE, LIME}, math::ops::abs, prelude::*
+        color::{self, palettes::basic::{BLUE, LIME}}, math::ops::abs, prelude::*
     };
     
-    use crate::{ handle_click, strukture::Mreza, LeftClick, RightClick};
+    use crate::{ game, handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
@@ -152,29 +152,67 @@ mod game {
         .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>))
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
+        .add_event::<GameOver>()
         .add_observer(odpri_tile)
         .add_observer(flag_polje)
+        .add_observer(game_over)
         
         ;
         
     }
 
 
-
 fn odpri_tile (
     trigger: Trigger<LeftClick>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
+    mut commands: Commands,
 ) {
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
-        if (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
+        if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
             sprite.image = asset_server.load(tile.uncovered.clone());
             tile.is_odprto = true;
+            if tile.vsebina.vsebina == Vsebina::Stevilo(0) {
+                commands.trigger(LeftClick {poz:(poz + vec2(35. , 0. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(35. , 35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , 35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-35. , 35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-35. , 0.))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-35. , -35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , -35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(35. , -35. ))});
+                // Ne razumem zakaj, ampak to NE DELA POČASI
+            }
+            if tile.vsebina.vsebina == Vsebina::Mina {
+                sprite.color = Color::srgba(1.,0.,0., 1.);
+                commands.trigger(GameOver);
+            }
+
         }
     }
 }
+
+#[derive(Event)]    
+struct GameOver;
+
+fn game_over (
+    trigger: Trigger<GameOver>,
+    mut query : Query<(&mut Sprite, &mut BevyTile)>,
+    asset_server: Res<AssetServer>,
+    // mut commands: Commands,
+) {
+        for (mut sprite,mut tile) in &mut query  {
+            if (tile.is_odprto == false) && tile.vsebina.vsebina == Vsebina::Mina {
+                tile.is_odprto = true;
+                sprite.image = asset_server.load(tile.uncovered.clone());
+            }
+        }
+}
+
+
+
 
 fn flag_polje (
     trigger: Trigger<RightClick>,
