@@ -23,9 +23,16 @@ struct Tezavnost {
     st_min: usize,
 }
 
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+struct SteviloNeodkritih {stevilo: usize}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+struct SteviloMin {stevilo: i32}
+
+
 pub const EAZY : Tezavnost = Tezavnost {
     velikost : (8,8),
-    st_min : 12,
+    st_min : 10,
 };
 
 pub const MEDIUM : Tezavnost = Tezavnost {
@@ -47,6 +54,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .insert_resource(Tezavnost{velikost: (8,8),st_min: 10})
+        .insert_resource(SteviloNeodkritih{stevilo:0})
+        .insert_resource(SteviloMin{stevilo:0})
         .init_state::<GameState>()
         .add_systems(Startup, setup)
         .add_plugins((splash::splash_plugin, menu::menu_plugin, game::game_plugin))
@@ -98,7 +107,7 @@ fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             OnSplashScreen,
-            children![( 
+            children![(     
                 ImageNode::new(icon),
                 Node {
                     // This will set the logo to be 200px wide, and auto adjust its height
@@ -140,7 +149,7 @@ mod game {
         color::{self, palettes::basic::{BLUE, LIME}}, math::ops::abs, prelude::*
     };
     
-    use crate::{ game, handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick};
+    use crate::{ game, handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
@@ -152,9 +161,11 @@ mod game {
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
         .add_event::<GameOver>()
+        .add_event::<GameWon>()
         .add_observer(odpri_tile)
         .add_observer(flag_polje)
         .add_observer(game_over)
+        .add_observer(game_won)
         
         ;
         
@@ -166,6 +177,7 @@ fn odpri_tile (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
+    mut st_ostalih: ResMut<SteviloNeodkritih>,
 ) {
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
@@ -173,6 +185,7 @@ fn odpri_tile (
         if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
             sprite.image = asset_server.load(tile.uncovered.clone());
             tile.is_odprto = true;
+            
             if tile.vsebina.vsebina == Vsebina::Stevilo(0) {
                 commands.trigger(LeftClick {poz:(poz + vec2(35. , 0. ))});
                 commands.trigger(LeftClick {poz:(poz + vec2(35. , 35. ))});
@@ -187,6 +200,12 @@ fn odpri_tile (
             if tile.vsebina.vsebina == Vsebina::Mina {
                 sprite.color = Color::srgba(1.,0.,0., 1.);
                 commands.trigger(GameOver);
+            } else {
+                st_ostalih.stevilo -= 1;
+                // println!("Stevilo neodkritih polj {}", st_ostalih.stevilo );
+                if st_ostalih.stevilo == 0 {
+                    commands.trigger(GameWon);
+                }
             }
 
         }
@@ -195,6 +214,10 @@ fn odpri_tile (
 
 #[derive(Event)]    
 struct GameOver;
+
+#[derive(Event)]    
+struct GameWon;
+
 
 fn game_over (
     trigger: Trigger<GameOver>,
@@ -210,6 +233,14 @@ fn game_over (
         }
 }
 
+fn game_won (
+    trigger: Trigger<GameWon>,
+    asset_server: Res<AssetServer>,
+    // mut commands: Commands,
+) {
+        println!("ZMAGA!");
+        // TODO
+}
 
 
 
@@ -217,6 +248,7 @@ fn flag_polje (
     trigger: Trigger<RightClick>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
+    mut st_min: ResMut<SteviloMin>,
 ) {
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
@@ -226,14 +258,17 @@ fn flag_polje (
             if tile.is_flaged {
                 sprite.image = asset_server.load(tile.covered.clone());
                 tile.is_flaged = false;
+                st_min.stevilo += 1;
+                println!("Stevilo min {}", st_min.stevilo);
             } else {
                 sprite.image = asset_server.load(tile.flaged.clone());
                 tile.is_flaged = true;
+                st_min.stevilo -= 1;
+                println!("Stevilo min {}", st_min.stevilo);
             }
         }
     }
 }
-
 
 
 
@@ -252,10 +287,14 @@ use crate::BevyTile;
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         tezavnost: Res<Tezavnost>,
-        time: Res<Time>
+        time: Res<Time>,
+        mut st_ostalih: ResMut<SteviloNeodkritih>,
+        mut st_min: ResMut<SteviloMin>,
     ) {
 
         let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
+        st_ostalih.stevilo = tezavnost.velikost.0 * tezavnost.velikost.1 - tezavnost.st_min;
+        st_min.stevilo = tezavnost.st_min as i32;
 
         for i in 0..mreza.velikost.0 {
         
