@@ -246,12 +246,12 @@ fn flag_polje (
                 sprite.image = asset_server.load(tile.covered.clone());
                 tile.is_flaged = false;
                 st_min.stevilo += 1;
-                println!("Stevilo min {}", st_min.stevilo);
+                // println!("Stevilo min {}", st_min.stevilo);
             } else {
                 sprite.image = asset_server.load(tile.flaged.clone());
                 tile.is_flaged = true;
                 st_min.stevilo -= 1;
-                println!("Stevilo min {}", st_min.stevilo);
+                // println!("Stevilo min {}", st_min.stevilo);
             }
         }
     }
@@ -590,19 +590,19 @@ fn main_menu_setup(mut commands: Commands) {
                             ),
                         ]
                     ),
-                    (
-                        Button,
-                        button_node.clone(),
-                        BackgroundColor(NORMAL_BUTTON),
-                        MenuButtonAction::Custom,
-                        children![  
-                            (
-                                Text::new("Custom"),
-                                button_text_font.clone(),
-                                TextColor(TEXT_COLOR),
-                            ),
-                        ]
-                    ),
+                    // (
+                    //     Button,
+                    //     button_node.clone(),
+                    //     BackgroundColor(NORMAL_BUTTON),
+                    //     MenuButtonAction::Custom,
+                    //     children![  
+                    //         (
+                    //             Text::new("Custom"),
+                    //             button_text_font.clone(),
+                    //             TextColor(TEXT_COLOR),
+                    //         ),
+                    //     ]
+                    // ),
 
                      (
                         Button,
