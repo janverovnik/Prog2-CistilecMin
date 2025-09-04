@@ -137,10 +137,10 @@ struct BevyTile {
 
 mod game {
     use bevy::{
-        color::palettes::basic::{BLUE, LIME}, math::ops::abs, prelude::*
+        color::{self, palettes::basic::{BLUE, LIME}}, math::ops::abs, prelude::*
     };
     
-    use crate::{ handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick};
+    use crate::{ game, handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick};
     
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
@@ -151,8 +151,10 @@ mod game {
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
+        .add_event::<GameOver>()
         .add_observer(odpri_tile)
         .add_observer(flag_polje)
+        .add_observer(game_over)
         
         ;
         
@@ -182,10 +184,34 @@ fn odpri_tile (
                 commands.trigger(LeftClick {poz:(poz + vec2(35. , -35. ))});
                 // Ne razumem zakaj, ampak to NE DELA POČASI
             }
+            if tile.vsebina.vsebina == Vsebina::Mina {
+                sprite.color = Color::srgba(1.,0.,0., 1.);
+                commands.trigger(GameOver);
+            }
 
         }
     }
 }
+
+#[derive(Event)]    
+struct GameOver;
+
+fn game_over (
+    trigger: Trigger<GameOver>,
+    mut query : Query<(&mut Sprite, &mut BevyTile)>,
+    asset_server: Res<AssetServer>,
+    // mut commands: Commands,
+) {
+        for (mut sprite,mut tile) in &mut query  {
+            if (tile.is_odprto == false) && tile.vsebina.vsebina == Vsebina::Mina {
+                tile.is_odprto = true;
+                sprite.image = asset_server.load(tile.uncovered.clone());
+            }
+        }
+}
+
+
+
 
 fn flag_polje (
     trigger: Trigger<RightClick>,
