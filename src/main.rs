@@ -145,10 +145,11 @@ mod game {
     use super::{despawn_screen, GameState, TEXT_COLOR};
     
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), game_setup)
+        app.add_systems(OnEnter(GameState::Game), (game_setup, setup_clock))
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
         .add_systems(Update, handle_click)
-        .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
+        .add_systems(Update, update_clock)
+        .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>))
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
         .add_observer(odpri_tile)
@@ -196,19 +197,46 @@ fn flag_polje (
     }
 }
 
+use bevy::time::Stopwatch;
+use std::time::Duration;
+
+#[derive(Component)]
+struct ClockDisplay{
+    time: Stopwatch
+}
+
+
+fn update_clock(timey: Res<Time>, query: Query<(&mut Text, &mut ClockDisplay)>) {
+    
+    for (mut text, mut clock) in query{
+        let elapsed = clock.time.elapsed().as_secs_f32() - 1.0;
+        clock.time.tick(Time::delta(&timey));
+        let seconds = elapsed as u32;
+        let time_str = if seconds < 10 {format!("00{seconds}")} else if seconds < 100 {format!("0{seconds}")} else {format!("{seconds}")};
+
+        text.0 = time_str;
+        
+    }
+
+}
 
 
 
 #[derive(Component)]
 struct OnGameScreen;
-    
-#[derive(Resource, Deref, DerefMut)]
-struct GameTimer(Timer);
 
-use bevy::time;
 use crate::Tezavnost;
 use crate::BevyTile;
 
+fn setup_clock(mut commands: Commands, tezavnost: Res<Tezavnost>) {
+    let timer = ((
+        Text::new("000"),
+        ClockDisplay{time: Stopwatch::new().tick(Duration::from_secs_f32(1.0)).clone()}
+    )
+    ,Transform::from_translation(vec3((tezavnost.velikost.0 as f32 + 1.0) * 35.0, 0. as f32,0.))
+        );
+    commands.spawn(timer);
+}
 
     fn game_setup(
         mut commands: Commands,
@@ -218,7 +246,7 @@ use crate::BevyTile;
     ) {
 
         let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
-
+        
         for i in 0..mreza.velikost.0 {
         
         for j in 0..mreza.velikost.1 {
