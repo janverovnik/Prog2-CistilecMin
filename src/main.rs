@@ -321,13 +321,9 @@ fn setup_clock(mut commands: Commands, tezavnost: Res<Tezavnost>) {
     ) {
 
         let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
-<<<<<<< HEAD
         st_ostalih.stevilo = tezavnost.velikost.0 * tezavnost.velikost.1 - tezavnost.st_min;
         st_min.stevilo = tezavnost.st_min as i32;
 
-=======
-        
->>>>>>> 7c061cb15e98c90ad9348b86eac720375db24d09
         for i in 0..mreza.velikost.0 {
         
         for j in 0..mreza.velikost.1 {
