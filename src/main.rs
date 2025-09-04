@@ -4,7 +4,6 @@ mod display;
 mod gameplay;
 
 
-use crate::strukture::*;
 use bevy::prelude::*;
 
 const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
@@ -18,7 +17,7 @@ enum GameState {
 }
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
-struct Tezavnost {
+pub struct Tezavnost {
     velikost: (usize,usize),
     st_min: usize,
 }
@@ -73,31 +72,21 @@ mod splash {
 
     use super::{despawn_screen, GameState};
 
-    // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
     pub fn splash_plugin(app: &mut App) {
-        // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
         app
-            // When entering the state, spawn everything needed for this screen
             .add_systems(OnEnter(GameState::Splash), splash_setup)
-            // While in this state, run the `countdown` system
             .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
-            // When exiting the state, despawn everything that was spawned for this screen
             .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
     }
 
-// Tag component used to tag entities added on the splash screen
 #[derive(Component)]
 struct OnSplashScreen;
 
-     // Newtype to use a `Timer` for this screen as a resource
 #[derive(Resource, Deref, DerefMut)]
 struct SplashTimer(Timer);
 
- // Newtype to use a `Timer` for this screen as a resource
-
 fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         let icon = asset_server.load("mina.png");
-        // Display the logo
         commands.spawn((
             Node {
                 align_items: AlignItems::Center,
@@ -110,7 +99,6 @@ fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             children![(     
                 ImageNode::new(icon),
                 Node {
-                    // This will set the logo to be 200px wide, and auto adjust its height
                     width: Val::Px(200.0),
                     ..default()
                 },
@@ -138,7 +126,6 @@ struct BevyTile {
     covered: String,
     uncovered: String,
     flaged: String,
-    pozicija: (usize,usize),
     global_pozicija: Vec2,
     is_flaged: bool,
     is_odprto: bool,
@@ -146,19 +133,18 @@ struct BevyTile {
 
 mod game {
     use bevy::{
-        color::{self, palettes::basic::{BLUE, LIME}}, math::ops::abs, prelude::*
+        math::ops::abs, prelude::*
     };
     
-    use crate::{ game, handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
+    use crate::{handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
     
-    use super::{despawn_screen, GameState, TEXT_COLOR};
+    use super::{despawn_screen, GameState};
     
     pub fn game_plugin(app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), (game_setup, setup_clock))
+        app.add_systems(OnEnter(GameState::Game), (game_setup, setup_clock, setup_count))
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
-        .add_systems(Update, handle_click)
-        .add_systems(Update, update_clock)
-        .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>))
+        .add_systems(Update, (handle_click, update_clock, update_count))
+        .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>, despawn_screen::<Counter>))
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
         .add_event::<GameOver>()
@@ -279,6 +265,8 @@ struct ClockDisplay{
     time: Stopwatch
 }
 
+#[derive(Component)]
+struct Counter;
 
 fn update_clock(timey: Res<Time>, query: Query<(&mut Text, &mut ClockDisplay)>) {
     
@@ -294,6 +282,12 @@ fn update_clock(timey: Res<Time>, query: Query<(&mut Text, &mut ClockDisplay)>) 
 
 }
 
+fn update_count(mine_res: Res<SteviloMin>, query: Query<(&mut Text, &mut Counter)>) {
+    let st_min = mine_res.stevilo; 
+    for (mut text, _) in query{
+        text.0 = format!["st_min: {st_min}"]
+    }
+}
 
 #[derive(Component)]
 struct OnGameScreen;
@@ -301,26 +295,49 @@ struct OnGameScreen;
 use crate::Tezavnost;
 use crate::BevyTile;
 
-fn setup_clock(mut commands: Commands, tezavnost: Res<Tezavnost>) {
-    let timer = ((
+
+fn setup_count(mut commands: Commands, mine_res: Res<SteviloMin>) {
+    let st_min = mine_res.stevilo; 
+    let counter = (
+        Node {position_type: PositionType::Absolute,
+        top: Val::Px(0.0),
+        left: Val::Px(0.0),
+        ..default()},
+        Text::new(format!["st_min: {st_min}"]),
+        TextFont {
+            font_size: 55.0,
+            ..default()
+        },
+        Counter);
+    commands.spawn(counter);
+}
+
+fn setup_clock(mut commands: Commands) {
+    let timer = (
+        Node {position_type: PositionType::Absolute,
+        top: Val::Px(0.0),
+        right: Val::Px(0.0),
+        ..default()},
         Text::new("000"),
+        TextFont {
+            font_size: 55.0,
+            ..default()
+        },
         ClockDisplay{time: Stopwatch::new().tick(Duration::from_secs_f32(1.0)).clone()}
-    )
-    ,Transform::from_translation(vec3((tezavnost.velikost.0 as f32 + 1.0) * 35.0, 0. as f32,0.))
-        );
+    );
     commands.spawn(timer);
 }
 
-    fn game_setup(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-        tezavnost: Res<Tezavnost>,
-        time: Res<Time>,
-        mut st_ostalih: ResMut<SteviloNeodkritih>,
-        mut st_min: ResMut<SteviloMin>,
+fn game_setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    tezavnost: Res<Tezavnost>,
+    time: Res<Time>,
+    mut st_ostalih: ResMut<SteviloNeodkritih>,
+    mut st_min: ResMut<SteviloMin>,
     ) {
 
-        let mut mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
+        let mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
         st_ostalih.stevilo = tezavnost.velikost.0 * tezavnost.velikost.1 - tezavnost.st_min;
         st_min.stevilo = tezavnost.st_min as i32;
 
@@ -343,7 +360,6 @@ fn setup_clock(mut commands: Commands, tezavnost: Res<Tezavnost>) {
                     covered : covered_png,
                     uncovered : uncovered_png,
                     flaged : flaged_png,
-                    pozicija : (i,j),
                     global_pozicija: (vec2((i as f32 + 0.5) * 35. - (mreza.velikost.0 as f32) / 2.0 * 35., (j as f32 + 0.5) * 35. - (mreza.velikost.1 as f32) / 2.0 * 35.)),
                     is_flaged : false,
                     is_odprto : false,
@@ -404,13 +420,12 @@ mod menu {
     use bevy::{
         app::AppExit,
         color::palettes::css::CRIMSON,
-        ecs::spawn::{SpawnIter, SpawnWith},
         prelude::*,
     };
 
 use crate::{BevyTile, EAZY, HARD, INSANE, MEDIUM};
 
-use super::{despawn_screen, GameState , TEXT_COLOR, Tile};
+use super::{despawn_screen, GameState , TEXT_COLOR};
 
 pub fn menu_plugin(app: &mut App) {
         app
@@ -428,7 +443,6 @@ pub fn menu_plugin(app: &mut App) {
     #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
     enum MenuState {
         Main,
-        Custom,
         #[default]
         Disabled,
     }
@@ -451,7 +465,6 @@ pub fn menu_plugin(app: &mut App) {
         Hard,
         Insane,
         Custom,
-        BackToMainMenu,
         Quit,
     }
 
@@ -485,12 +498,12 @@ fn main_menu_setup(mut commands: Commands) {
             align_items: AlignItems::Center,
             ..default()
         };  
-        let button_icon_node = Node {
-            width: Val::Px(30.0),
-            position_type: PositionType::Absolute,
-            left: Val::Px(10.0),
-            ..default() 
-        };
+        // let button_icon_node = Node {
+        //     width: Val::Px(30.0),
+        //     position_type: PositionType::Absolute,
+        //     left: Val::Px(10.0),
+        //     ..default() 
+        // };
         let button_text_font = TextFont {
             font_size: 33.0,
             ..default()
@@ -647,10 +660,10 @@ fn menu_action(
                         game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
-                    MenuButtonAction::BackToMainMenu => {
-                        game_state.set(GameState::Menu);
-                        menu_state.set(MenuState::Main);
-                    }
+                //     MenuButtonAction::BackToMainMenu => {
+                //         game_state.set(GameState::Menu);
+                //         menu_state.set(MenuState::Main);
+                //     }
                 }
             }
         }
