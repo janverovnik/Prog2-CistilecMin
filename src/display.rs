@@ -6,15 +6,6 @@ use crate::strukture::Vsebina::{Mina, Stevilo};
 use crate::strukture::Status;
 
 impl Tile {
-pub fn png_select(&self) -> String {
-    match self.status() {
-       Status::Open => match self.vsebina {
-            Mina => String::from("mina.png"),
-            Stevilo(x) => format!("{x}.png")
-       },
-       Status::Closed(mark) => if *mark == Mark::Flagged {String::from("flag.png")} else if *mark == Mark::NotFlagged {String::from("top.png")} else {String::from("safe.png")}
-    }
-}
 
 pub fn png_selections(&self) -> (String, String, String) {
     let covered = match self.status {
@@ -67,12 +58,7 @@ impl Display for Mreza {
 #[cfg(test)]
 mod tests {
     use crate::strukture::Mreza;
-
-    #[test]
-    fn printaj() -> () {
-        let mreza = Mreza::new((16,16),40,42);
-        print!("{}", mreza);
-    }
+    
     #[test]
     fn printaj_safe() -> () {
         let mreza = Mreza::safe_new((16,16),40,42);

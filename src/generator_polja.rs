@@ -9,32 +9,7 @@ fn razlika(m:usize,n:usize) -> usize {
 }
 
 impl Mreza {
-    pub fn new(velikost : (usize,usize), st_min: usize, seed : u64) -> Mreza {
-        let mut mreza = Mreza::prazna(velikost);
-        let mut zaporedje = random_array_homemade(velikost.0 * velikost.1, st_min, seed).into_iter();
-        let mut naslednji : bool;
-        for i in 0..velikost.0 {
-            for j in 0..velikost.1 {
-                naslednji = match zaporedje.next() {
-                    Some(t) => t,
-                    None => true,
-                };
-                if naslednji {
-                    mreza.add_tile(Tile::new_bomb(), (i,j));
-                }
-            }
-        };
-        for i in 0..velikost.0 {
-            for j in 0..velikost.1 {
-                if mreza.je_prazno((i,j)) {
-                    mreza.add_tile(Tile::new_number(mreza.pripisi_stevilo((i, j))),(i,j));
-                }
-            }
-        };
-        mreza
-    }
-
-    pub fn safe_new(velikost: (usize,usize),st_min: usize, seed : u64) -> Mreza {
+    pub fn safe_new(velikost: (usize,usize),st_min: usize, seed : u64) -> Mreza { //TODO: POLEPŠAJ KODO!!!!
         let (m, n) = (velikost.0 - 1, velikost.1 - 1);
         let safe_space = rand_safe(seed, &velikost);
         let (s0,s1) = safe_space;
@@ -123,14 +98,6 @@ fn rand_safe(seed:u64, &velikost: &(usize,usize)) -> (usize,usize) {
     };
     ((x % n) as usize,(y % m) as usize)
 }
-
-pub fn rand_u64((i,j):(usize,usize)) -> usize {
-    rand_safe(42,&(i,j)).0
-}
-
-
-
-
 
 #[cfg(test)]
 mod tests {

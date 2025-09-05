@@ -1,8 +1,6 @@
 mod strukture;
 mod generator_polja;
 mod display;
-mod gameplay;
-
 
 use bevy::prelude::*;
 
@@ -464,7 +462,7 @@ pub fn menu_plugin(app: &mut App) {
         Medium,
         Hard,
         Insane,
-        Custom,
+      //  Custom,
         Quit,
     }
 
@@ -656,10 +654,10 @@ fn menu_action(
                         *tezavnost = INSANE;
                         menu_state.set(MenuState::Disabled);
                     }
-                    MenuButtonAction::Custom => {
-                        game_state.set(GameState::Game);
-                        menu_state.set(MenuState::Disabled);
-                    }
+                // MenuButtonAction::Custom => {
+                //     game_state.set(GameState::Game);
+                //     menu_state.set(MenuState::Disabled);
+                // }
                 //     MenuButtonAction::BackToMainMenu => {
                 //         game_state.set(GameState::Menu);
                 //         menu_state.set(MenuState::Main);

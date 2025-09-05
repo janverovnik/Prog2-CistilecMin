@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 #[derive(PartialEq,Clone,Copy,Debug,Eq)]
 pub enum Mark {
@@ -29,7 +28,6 @@ pub struct Tile {
 
 pub struct Mreza {
     pub velikost: (usize, usize),
-    // tiles: HashMap<(u16, u16), Tile>,
     tiles: Vec<Vec<Option<Tile>>>
 }
 
@@ -63,19 +61,6 @@ impl Tile {
             status: Status::Closed(Mark::Safe)
         }
     }
-
-    pub fn uncover(&mut self) -> () {
-        self.status = Status::Open  
-    }
-    
-    pub fn change_flag(&mut self) -> () {
-        self.status = match self.status {
-            Status::Open =>  Status::Open,
-            Status::Closed(Mark::Flagged) => Status::Closed(Mark::NotFlagged),
-            Status::Closed(Mark::NotFlagged) => Status::Closed(Mark::Flagged),
-            Status::Closed(Mark::Safe) => panic!("Cannot change flags before game start!")
-        }
-    }
 }
 
 impl Mreza {
@@ -88,23 +73,7 @@ impl Mreza {
         None
     }
 
-    pub fn mines(&self) -> Vec<(usize, usize)> {
-        let mut mine_vec = vec![];
-        let (m,n) = self.velikost;
-        for i in 0..m {
-            for j in 0..n {
-                match self.tile((i,j)) {
-                    Some(tile) => 
-                    if (*tile).vsebina == Vsebina::Mina {mine_vec.push((i, j))},
-                    _ => (),
-                }
-            }
-        }
-        return mine_vec
-    }
-    
-
-    pub fn sosedje(&self, mesto:(usize, usize)) -> Vec<(usize, usize)> {
+    pub fn sosedje(&self, mesto:(usize, usize)) -> Vec<(usize, usize)> { // TODO: POLEPŠAJ!!
         let (m_plus,n_plus) = self.velikost;
         let (m,n) = (m_plus-1,n_plus-1);
         let (i,j) = mesto;
@@ -145,22 +114,6 @@ impl Mreza {
         stevec
     }
     
-    pub fn sosednje_zastavice(&self, mesto:(usize, usize)) -> u8 {
-        let mut stevec: u8 = 0;
-        for sosed in &self.sosedje(mesto) {
-            match self.tile(*sosed) {
-                None => stevec += 0,
-                Some(tile) => 
-                    match tile.status {
-                        Status::Closed(Mark::Flagged) => stevec += 1,
-                        _ => ()
-                    }
-                }
-            }
-        stevec
-        }
-        
-
     pub fn prazna(velikost: (usize, usize)) -> Mreza {
         Mreza {
             velikost: velikost,
@@ -172,19 +125,6 @@ impl Mreza {
         match self.tile(mesto) {
             None => true,
             Some(_) => false,
-        }
-    }
-
-     fn tile_mut(&mut self, mesto:(usize, usize)) -> Option<&mut Tile> {
-        self.tiles[mesto.0][mesto.1].as_mut()
-    }   
-    
-    pub fn apply_on_tile<F>(&mut self,mut f: F, mesto:(usize, usize)) -> ()
-    where 
-        F : FnMut(&mut Tile) ->  ()  {
-        match self.tile_mut(mesto) {
-            None => (),
-            Some(tile) => f(tile),
         }
     }
 
