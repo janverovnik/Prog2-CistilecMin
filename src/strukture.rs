@@ -73,32 +73,23 @@ impl Mreza {
         None
     }
 
-    pub fn sosedje(&self, mesto:(usize, usize)) -> Vec<(usize, usize)> { // TODO: POLEPŠAJ!!
-        let (m_plus,n_plus) = self.velikost;
-        let (m,n) = (m_plus-1,n_plus-1);
-        let (i,j) = mesto;
-        let mozni = if (i,j) == (m,0) {
-            vec![(m-1,0),(m-1,1),(m,1)]
-        } else if (i,j) == (0,n) {
-            vec![(0,n-1), (1,n-1), (1,n)]
-        } else if (i,j) == (m,n) {
-            vec![(m-1,n),(m-1,n-1),(m,n-1)]
-        } else if i == m {
-            vec![(i,j-1), (i-1,j-1), (i-1,j), (i-1,j+1), (i,j+1)]
-        } else if j == n {
-            vec![(i-1,j), (i-1,j-1), (i,j-1), (i+1,j-1), (i+1,j)]
-        } else {match (i,j) {
-            (0,0) => vec![(0,1),(1,0),(1,1)],
-            (0,j) => vec![(0, j - 1), (1, j - 1), (1, j), (0, j + 1), (1, j + 1)],
-            (i,0) => vec![(i - 1, 0), (i + 1, 0),(i - 1, 1), (i, 1), (i + 1, 1)],
-            (_,_) => vec![(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
-            (i - 1, j), (i + 1, j),
-        (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)],
+    pub fn sosedje(&self, mesto:(usize, usize)) -> Vec<(usize, usize)> {
+        let (m,n) = self.velikost;
+        let (i,j) = mesto; 
+
+        let meja_levo = if i > 0 {i-1} else {i};
+        let meja_desno =  if i < m - 1 {i+1} else {i};
+        let meja_gor = if j > 0 {j-1} else {j};
+        let meja_dol = if j < n - 1 {j+1} else {j};
+
+        let mut mozni = vec![];
+        for a in meja_levo..(meja_desno+1) {
+            for b in meja_gor..(meja_dol+1){
+                if (a,b) != (i,j) {mozni.push((a,b))}
+            }
         }
-        };
     return mozni
     }
-    // Ocaml match VELIKO BOLJ superioren od rust matcha
 
     pub fn pripisi_stevilo(&self, mesto:(usize, usize)) -> u8 {
         let mut stevec: u8 = 0;
