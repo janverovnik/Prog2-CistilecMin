@@ -9,8 +9,7 @@ fn razlika(m:usize,n:usize) -> usize {
 }
 
 impl Mreza {
-    pub fn safe_new(velikost: (usize,usize),st_min: usize, seed : u64) -> Mreza { //TODO: POLEPŠAJ KODO!!!!
-        let (m, n) = (velikost.0 - 1, velikost.1 - 1);
+    pub fn safe_new(velikost: (usize,usize),st_min: usize, seed : u64) -> Mreza {
         let safe_space = rand_safe(seed, &velikost);
         let (s0,s1) = safe_space;
         let mut mreza = Mreza::prazna(velikost);
