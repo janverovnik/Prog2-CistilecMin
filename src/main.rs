@@ -228,7 +228,7 @@ fn game_over (
                 height: Val::Percent(100.0),
                 ..default()
             },
-            Text::new("You lose!"),
+            Text::new(" You lose! \n Press Esc"),
             TextLayout::new_with_justify(JustifyText::Center),
             TextFont {
             font: asset_server.load("times.ttf"),
@@ -246,7 +246,7 @@ fn game_won (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     mut commands: Commands
 ) {
-        for (mut sprite,mut tile) in &mut query  {
+        for (mut sprite, mut tile) in &mut query  {
             if tile.vsebina.vsebina == Vsebina::Mina {
                 tile.is_odprto = true;
                 sprite.image = asset_server.load(tile.flaged.clone());
@@ -260,7 +260,7 @@ fn game_won (
                 height: Val::Percent(100.0),
                 ..default()
             },
-            Text::new("You win!"),
+            Text::new(" You win! \n Press Esc"),
             TextLayout::new_with_justify(JustifyText::Center),
             TextFont {
             font: asset_server.load("times.ttf"),
