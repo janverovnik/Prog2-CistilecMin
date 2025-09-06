@@ -191,7 +191,6 @@ fn odpri_tile (
                 commands.trigger(GameOver);
             } else {
                 st_ostalih.stevilo -= 1;
-                // println!("Stevilo neodkritih polj {}", st_ostalih.stevilo );
                 if st_ostalih.stevilo == 0 {
                     commands.trigger(GameWon);
                 }
@@ -209,7 +208,7 @@ struct GameWon;
 
 
 fn game_over (
-    trigger: Trigger<GameOver>,
+    _trigger: Trigger<GameOver>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
     mut konec: ResMut<KonecIgre>,
@@ -224,12 +223,11 @@ fn game_over (
 }
 
 fn game_won (
-    trigger: Trigger<GameWon>,
+    _trigger: Trigger<GameWon>,
     asset_server: Res<AssetServer>,
     mut konec: ResMut<KonecIgre>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
 ) {
-        println!("ZMAGA!");
         for (mut sprite,mut tile) in &mut query  {
             if tile.vsebina.vsebina == Vsebina::Mina {
                 tile.is_odprto = true;
@@ -296,7 +294,7 @@ fn update_clock(timey: Res<Time>,konec:Res<KonecIgre> , query: Query<(&mut Text,
 fn update_count(mine_res: Res<SteviloMin>, query: Query<(&mut Text, &mut Counter)>) {
     let st_min = mine_res.stevilo; 
     for (mut text, _) in query{
-        text.0 = format!["st_min: {st_min}"]
+        text.0 = format!["Število min: {st_min}"]
     }
 }
 
@@ -307,7 +305,7 @@ use crate::Tezavnost;
 use crate::BevyTile;
 
 
-fn setup_count(mut commands: Commands, mine_res: Res<SteviloMin>) {
+fn setup_count(mut commands: Commands, mine_res: Res<SteviloMin>, asset_server: Res<AssetServer>) {
     let st_min = mine_res.stevilo; 
     let counter = (
         Node {position_type: PositionType::Absolute,
@@ -316,6 +314,7 @@ fn setup_count(mut commands: Commands, mine_res: Res<SteviloMin>) {
         ..default()},
         Text::new(format!["st_min: {st_min}"]),
         TextFont {
+            font: asset_server.load("times.ttf"),
             font_size: 55.0,
             ..default()
         },
@@ -323,7 +322,7 @@ fn setup_count(mut commands: Commands, mine_res: Res<SteviloMin>) {
     commands.spawn(counter);
 }
 
-fn setup_clock(mut commands: Commands) {
+fn setup_clock(mut commands: Commands,asset_server: Res<AssetServer>) {
     let timer = (
         Node {position_type: PositionType::Absolute,
         top: Val::Px(0.0),
@@ -331,6 +330,7 @@ fn setup_clock(mut commands: Commands) {
         ..default()},
         Text::new("000"),
         TextFont {
+            font: asset_server.load("times.ttf"),
             font_size: 55.0,
             ..default()
         },
@@ -505,7 +505,7 @@ fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
         menu_state.set(MenuState::Main);
     }
 
-fn main_menu_setup(mut commands: Commands) {
+fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let button_node = Node {
             width: Val::Px(300.0),
             height: Val::Px(65.0),
@@ -514,13 +514,8 @@ fn main_menu_setup(mut commands: Commands) {
             align_items: AlignItems::Center,
             ..default()
         };  
-        // let button_icon_node = Node {
-        //     width: Val::Px(30.0),
-        //     position_type: PositionType::Absolute,
-        //     left: Val::Px(10.0),
-        //     ..default() 
-        // };
         let button_text_font = TextFont {
+            font: asset_server.load("times.ttf"),
             font_size: 33.0,
             ..default()
         };        
@@ -543,8 +538,9 @@ fn main_menu_setup(mut commands: Commands) {
                 BackgroundColor(CRIMSON.into()),
                 children![
                     (
-                        Text::new("Cistilec min"),
+                        Text::new("Čistilec min"),
                         TextFont {
+                            font: asset_server.load("times.ttf"),
                             font_size: 67.0,
                             ..default()
                         },
@@ -606,20 +602,6 @@ fn main_menu_setup(mut commands: Commands) {
                             ),
                         ]
                     ),
-                    // (
-                    //     Button,
-                    //     button_node.clone(),
-                    //     BackgroundColor(NORMAL_BUTTON),
-                    //     MenuButtonAction::Custom,
-                    //     children![  
-                    //         (
-                    //             Text::new("Custom"),
-                    //             button_text_font.clone(),
-                    //             TextColor(TEXT_COLOR),
-                    //         ),
-                    //     ]
-                    // ),
-
                      (
                         Button,
                         button_node,
@@ -672,14 +654,6 @@ fn menu_action(
                         *tezavnost = INSANE;
                         menu_state.set(MenuState::Disabled);
                     }
-                // MenuButtonAction::Custom => {
-                //     game_state.set(GameState::Game);
-                //     menu_state.set(MenuState::Disabled);
-                // }
-                //     MenuButtonAction::BackToMainMenu => {
-                //         game_state.set(GameState::Menu);
-                //         menu_state.set(MenuState::Main);
-                //     }
                 }
             }
         }
