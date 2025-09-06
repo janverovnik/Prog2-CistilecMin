@@ -21,6 +21,9 @@ pub struct Tezavnost {
 }
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+struct KonecIgre {bool : bool}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 struct SteviloNeodkritih {stevilo: usize}
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
@@ -53,6 +56,7 @@ fn main() {
         .insert_resource(Tezavnost{velikost: (8,8),st_min: 10})
         .insert_resource(SteviloNeodkritih{stevilo:0})
         .insert_resource(SteviloMin{stevilo:0})
+        .insert_resource(KonecIgre {bool:false})
         .init_state::<GameState>()
         .add_systems(Startup, setup)
         .add_plugins((splash::splash_plugin, menu::menu_plugin, game::game_plugin))
@@ -134,7 +138,7 @@ mod game {
         math::ops::abs, prelude::*
     };
     
-    use crate::{handle_click, strukture::{Mreza, Vsebina}, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
+    use crate::{handle_click, strukture::{Mreza, Vsebina}, KonecIgre, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
     
     use super::{despawn_screen, GameState};
     
@@ -208,7 +212,7 @@ fn game_over (
     trigger: Trigger<GameOver>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
-    // mut commands: Commands,
+    mut konec: ResMut<KonecIgre>,
 ) {
         for (mut sprite,mut tile) in &mut query  {
             if (tile.is_odprto == false) && tile.vsebina.vsebina == Vsebina::Mina {
@@ -216,15 +220,23 @@ fn game_over (
                 sprite.image = asset_server.load(tile.uncovered.clone());
             }
         }
+        konec.bool = true;
 }
 
 fn game_won (
     trigger: Trigger<GameWon>,
     asset_server: Res<AssetServer>,
-    // mut commands: Commands,
+    mut konec: ResMut<KonecIgre>,
+    mut query : Query<(&mut Sprite, &mut BevyTile)>,
 ) {
         println!("ZMAGA!");
-        // TODO
+        for (mut sprite,mut tile) in &mut query  {
+            if tile.vsebina.vsebina == Vsebina::Mina {
+                tile.is_odprto = true;
+                sprite.image = asset_server.load(tile.flaged.clone());
+            }
+        }
+        konec.bool = true;
 }
 
 
@@ -266,16 +278,17 @@ struct ClockDisplay{
 #[derive(Component)]
 struct Counter;
 
-fn update_clock(timey: Res<Time>, query: Query<(&mut Text, &mut ClockDisplay)>) {
-    
-    for (mut text, mut clock) in query{
-        let elapsed = clock.time.elapsed().as_secs_f32() - 1.0;
-        clock.time.tick(Time::delta(&timey));
-        let seconds = elapsed as u32;
-        let time_str = if seconds < 10 {format!("00{seconds}")} else if seconds < 100 {format!("0{seconds}")} else {format!("{seconds}")};
-
-        text.0 = time_str;
-        
+fn update_clock(timey: Res<Time>,konec:Res<KonecIgre> , query: Query<(&mut Text, &mut ClockDisplay)>) {
+    if konec.bool == false {
+        for (mut text, mut clock) in query{
+            let elapsed = clock.time.elapsed().as_secs_f32() - 1.0;
+            clock.time.tick(Time::delta(&timey));
+            let seconds = elapsed as u32;
+            let time_str = if seconds < 10 {format!("00{seconds}")} else if seconds < 100 {format!("0{seconds}")} else {format!("{seconds}")};
+            
+            text.0 = time_str;
+            
+        }
     }
 
 }
@@ -333,11 +346,13 @@ fn game_setup(
     time: Res<Time>,
     mut st_ostalih: ResMut<SteviloNeodkritih>,
     mut st_min: ResMut<SteviloMin>,
+    mut konec: ResMut<KonecIgre>,
     ) {
 
         let mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
         st_ostalih.stevilo = tezavnost.velikost.0 * tezavnost.velikost.1 - tezavnost.st_min;
         st_min.stevilo = tezavnost.st_min as i32;
+        konec.bool = false;
 
         for i in 0..mreza.velikost.0 {
         
@@ -369,7 +384,6 @@ fn game_setup(
         }
     }
 
-
  fn game(
         keys: Res<ButtonInput<KeyCode>>,
         mut game_state: ResMut<NextState<GameState>>,
@@ -392,7 +406,11 @@ fn handle_click (
     camera: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
     mut commands: Commands,
+    konec: Res<KonecIgre>,
 ) {
+    if konec.bool {
+        return;
+    }
     let Ok(windows) = windows.single() else {
         return;
     };
