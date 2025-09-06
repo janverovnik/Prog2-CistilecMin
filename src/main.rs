@@ -40,13 +40,13 @@ pub const EAZY : Tezavnost = Tezavnost {
 pub const MEDIUM : Tezavnost = Tezavnost {
     velikost : (16,16),
     st_min : 35,
-    tile_size: 40.,
+    tile_size: 38.,
 };
 
 pub const HARD : Tezavnost = Tezavnost {
     velikost : (28,16),
     st_min : 80,
-    tile_size: 32.,
+    tile_size: 35.,
 };
 
 pub const INSANE : Tezavnost = Tezavnost {
@@ -253,6 +253,7 @@ fn game_won (
     _trigger: Trigger<GameWon>,
     asset_server: Res<AssetServer>,
     mut konec: ResMut<KonecIgre>,
+    mut st_min: ResMut<SteviloMin>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     mut commands: Commands
 ) {
@@ -263,6 +264,7 @@ fn game_won (
             }
         }
         konec.bool = true;
+        st_min.stevilo = 0;
         commands.spawn((Node {
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
