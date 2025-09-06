@@ -288,12 +288,10 @@ fn flag_polje (
                 sprite.image = asset_server.load(tile.covered.clone());
                 tile.is_flaged = false;
                 st_min.stevilo += 1;
-                // println!("Stevilo min {}", st_min.stevilo);
             } else {
                 sprite.image = asset_server.load(tile.flaged.clone());
                 tile.is_flaged = true;
                 st_min.stevilo -= 1;
-                // println!("Stevilo min {}", st_min.stevilo);
             }
         }
     }
@@ -456,11 +454,9 @@ fn handle_click (
     {
         if mouse_button_input.just_pressed(MouseButton::Left) {
             commands.trigger(LeftClick {poz:pos});
-            // println!("LeftClick");
         }
         if mouse_button_input.just_pressed(MouseButton::Right) {
             commands.trigger(RightClick {poz:pos});
-            //  println!("RightClick");
         }
         }
 
@@ -514,7 +510,6 @@ pub fn menu_plugin(app: &mut App) {
         Medium,
         Hard,
         Insane,
-      //  Custom,
         Quit,
     }
 
