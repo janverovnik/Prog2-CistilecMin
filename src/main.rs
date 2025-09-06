@@ -14,10 +14,11 @@ enum GameState {
     Game,
 }
 
-#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 pub struct Tezavnost {
     velikost: (usize,usize),
     st_min: usize,
+    tile_size: f32,
 }
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
@@ -33,32 +34,38 @@ struct SteviloMin {stevilo: i32}
 pub const EAZY : Tezavnost = Tezavnost {
     velikost : (8,8),
     st_min : 10,
+    tile_size: 55.
 };
 
 pub const MEDIUM : Tezavnost = Tezavnost {
     velikost : (16,16),
     st_min : 35,
+    tile_size: 40.,
 };
 
 pub const HARD : Tezavnost = Tezavnost {
     velikost : (28,16),
     st_min : 80,
+    tile_size: 32.,
 };
 
 pub const INSANE : Tezavnost = Tezavnost {
     velikost : (28,20),
     st_min : 120,
+    tile_size: 32.,
 };
 
-pub const TILESIZE : f32 = 35.;
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
+struct TileSize {size: f32}
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(Tezavnost{velikost: (8,8),st_min: 10})
+        .insert_resource(Tezavnost{velikost: (8,8),st_min: 10, tile_size: 60.})
         .insert_resource(SteviloNeodkritih{stevilo:0})
         .insert_resource(SteviloMin{stevilo:0})
         .insert_resource(KonecIgre {bool:false})
+        .insert_resource(TileSize{size: 60.})
         .init_state::<GameState>()
         .add_systems(Startup, setup)
         .add_plugins((splash::splash_plugin, menu::menu_plugin, game::game_plugin))
@@ -140,7 +147,7 @@ mod game {
         math::ops::abs, prelude::*
     };
     
-    use crate::{handle_click, strukture::{Mreza, Vsebina}, KonecIgre, LeftClick, RightClick, SteviloMin, SteviloNeodkritih, TILESIZE};
+    use crate::{handle_click, strukture::{Mreza, Vsebina}, KonecIgre, LeftClick, RightClick, SteviloMin, SteviloNeodkritih, TileSize};
     
     use super::{despawn_screen, GameState};
     
@@ -169,23 +176,24 @@ fn odpri_tile (
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut st_ostalih: ResMut<SteviloNeodkritih>,
+    tile_size: Res<TileSize>,
 ) {
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
-        if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < TILESIZE / 2. && abs(tile_poz.y - poz.y) < TILESIZE / 2.   {
+        if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < tile_size.size / 2. && abs(tile_poz.y - poz.y) < tile_size.size / 2.   {
             sprite.image = asset_server.load(tile.uncovered.clone());
             tile.is_odprto = true;
             
             if tile.vsebina.vsebina == Vsebina::Stevilo(0) {
-                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , 0. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , TILESIZE ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(0. , TILESIZE ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , TILESIZE ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , 0.))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , -TILESIZE ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(0. , -TILESIZE ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , -TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(tile_size.size , 0. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(tile_size.size , tile_size.size ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , tile_size.size ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-tile_size.size , tile_size.size ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-tile_size.size , 0.))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-tile_size.size , -tile_size.size ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , -tile_size.size ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(tile_size.size , -tile_size.size ))});
                 // Ne razumem zakaj, ampak to NE DELA POČASI
             }
             if tile.vsebina.vsebina == Vsebina::Mina {
@@ -280,11 +288,12 @@ fn flag_polje (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
     mut st_min: ResMut<SteviloMin>,
+    tile_size: Res<TileSize>,
 ) {
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
-        if (tile.is_odprto == false) && abs(tile_poz.x - poz.x) < TILESIZE / 2. && abs(tile_poz.y - poz.y) < TILESIZE / 2.  {
+        if (tile.is_odprto == false) && abs(tile_poz.x - poz.x) < tile_size.size / 2. && abs(tile_poz.y - poz.y) < tile_size.size / 2.  {
 
             if tile.is_flaged {
                 sprite.image = asset_server.load(tile.covered.clone());
@@ -381,12 +390,14 @@ fn game_setup(
     mut st_ostalih: ResMut<SteviloNeodkritih>,
     mut st_min: ResMut<SteviloMin>,
     mut konec: ResMut<KonecIgre>,
+    mut tile_size: ResMut<TileSize>,
     ) {
 
         let mreza = Mreza::safe_new(tezavnost.velikost, tezavnost.st_min, time.elapsed().as_millis() as u64);
         st_ostalih.stevilo = tezavnost.velikost.0 * tezavnost.velikost.1 - tezavnost.st_min;
         st_min.stevilo = tezavnost.st_min as i32;
         konec.bool = false;
+        tile_size.size = tezavnost.tile_size;
 
         for i in 0..mreza.velikost.0 {
         
@@ -397,17 +408,17 @@ fn game_setup(
             (
                 Sprite {
                     image: asset_server.load(covered_png.clone()),
-                    custom_size: Some(Vec2::new(TILESIZE, TILESIZE)),
+                    custom_size: Some(Vec2::new(tile_size.size, tile_size.size)),
                     ..Default::default()
             },
-            Transform::from_translation(vec3((i as f32 + 0.5) * TILESIZE - (mreza.velikost.0 as f32) / 2.0 * TILESIZE, (j as f32 + 0.5) * TILESIZE - (mreza.velikost.1 as f32) / 2.0 * TILESIZE , 0.)),
+            Transform::from_translation(vec3((i as f32 + 0.5) * tile_size.size - (mreza.velikost.0 as f32) / 2.0 * tile_size.size, (j as f32 + 0.5) * tile_size.size - (mreza.velikost.1 as f32) / 2.0 * tile_size.size , 0.)),
                 BevyTile 
                 {
                     vsebina : *new_tile,
                     covered : covered_png,
                     uncovered : uncovered_png,
                     flaged : flaged_png,
-                    global_pozicija: (vec2((i as f32 + 0.5) * TILESIZE - (mreza.velikost.0 as f32) / 2.0 * TILESIZE, (j as f32 + 0.5) * TILESIZE - (mreza.velikost.1 as f32) / 2.0 * TILESIZE)),
+                    global_pozicija: (vec2((i as f32 + 0.5) * tile_size.size - (mreza.velikost.0 as f32) / 2.0 * tile_size.size, (j as f32 + 0.5) * tile_size.size - (mreza.velikost.1 as f32) / 2.0 * tile_size.size)),
                     is_flaged : false,
                     is_odprto : false,
                 },
