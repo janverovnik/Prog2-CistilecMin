@@ -50,6 +50,8 @@ pub const INSANE : Tezavnost = Tezavnost {
     st_min : 120,
 };
 
+pub const TILESIZE : f32 = 35.;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -138,7 +140,7 @@ mod game {
         math::ops::abs, prelude::*
     };
     
-    use crate::{handle_click, strukture::{Mreza, Vsebina}, KonecIgre, LeftClick, RightClick, SteviloMin, SteviloNeodkritih};
+    use crate::{handle_click, strukture::{Mreza, Vsebina}, KonecIgre, LeftClick, RightClick, SteviloMin, SteviloNeodkritih, TILESIZE};
     
     use super::{despawn_screen, GameState};
     
@@ -171,19 +173,19 @@ fn odpri_tile (
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
-        if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
+        if (tile.is_odprto == false) && (tile.is_flaged == false) && abs(tile_poz.x - poz.x) < TILESIZE / 2. && abs(tile_poz.y - poz.y) < TILESIZE / 2.   {
             sprite.image = asset_server.load(tile.uncovered.clone());
             tile.is_odprto = true;
             
             if tile.vsebina.vsebina == Vsebina::Stevilo(0) {
-                commands.trigger(LeftClick {poz:(poz + vec2(35. , 0. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(35. , 35. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(0. , 35. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-35. , 35. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-35. , 0.))});
-                commands.trigger(LeftClick {poz:(poz + vec2(-35. , -35. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(0. , -35. ))});
-                commands.trigger(LeftClick {poz:(poz + vec2(35. , -35. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , 0. ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , 0.))});
+                commands.trigger(LeftClick {poz:(poz + vec2(-TILESIZE , -TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(0. , -TILESIZE ))});
+                commands.trigger(LeftClick {poz:(poz + vec2(TILESIZE , -TILESIZE ))});
                 // Ne razumem zakaj, ampak to NE DELA POČASI
             }
             if tile.vsebina.vsebina == Vsebina::Mina {
@@ -282,7 +284,7 @@ fn flag_polje (
     for (mut sprite,mut tile) in &mut query  {
         let poz = trigger.event().poz;
         let tile_poz = tile.global_pozicija;
-        if (tile.is_odprto == false) && abs(tile_poz.x - poz.x) < 17.5 && abs(tile_poz.y - poz.y) < 17.5   {
+        if (tile.is_odprto == false) && abs(tile_poz.x - poz.x) < TILESIZE / 2. && abs(tile_poz.y - poz.y) < TILESIZE / 2.  {
 
             if tile.is_flaged {
                 sprite.image = asset_server.load(tile.covered.clone());
@@ -395,17 +397,17 @@ fn game_setup(
             (
                 Sprite {
                     image: asset_server.load(covered_png.clone()),
-                    custom_size: Some(Vec2::new(35., 35.)),
+                    custom_size: Some(Vec2::new(TILESIZE, TILESIZE)),
                     ..Default::default()
             },
-            Transform::from_translation(vec3((i as f32 + 0.5) * 35. - (mreza.velikost.0 as f32) / 2.0 * 35., (j as f32 + 0.5) * 35. - (mreza.velikost.1 as f32) / 2.0 * 35. , 0.)),
+            Transform::from_translation(vec3((i as f32 + 0.5) * TILESIZE - (mreza.velikost.0 as f32) / 2.0 * TILESIZE, (j as f32 + 0.5) * TILESIZE - (mreza.velikost.1 as f32) / 2.0 * TILESIZE , 0.)),
                 BevyTile 
                 {
                     vsebina : *new_tile,
                     covered : covered_png,
                     uncovered : uncovered_png,
                     flaged : flaged_png,
-                    global_pozicija: (vec2((i as f32 + 0.5) * 35. - (mreza.velikost.0 as f32) / 2.0 * 35., (j as f32 + 0.5) * 35. - (mreza.velikost.1 as f32) / 2.0 * 35.)),
+                    global_pozicija: (vec2((i as f32 + 0.5) * TILESIZE - (mreza.velikost.0 as f32) / 2.0 * TILESIZE, (j as f32 + 0.5) * TILESIZE - (mreza.velikost.1 as f32) / 2.0 * TILESIZE)),
                     is_flaged : false,
                     is_odprto : false,
                 },
