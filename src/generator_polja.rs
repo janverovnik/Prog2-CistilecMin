@@ -14,14 +14,7 @@ impl Mreza {
         let safe_space = rand_safe(seed, &velikost);
         let (s0,s1) = safe_space;
         let mut mreza = Mreza::prazna(velikost);
-        let varne = if safe_space == (0,0) || safe_space == (m, 0) || safe_space == (0, n) || safe_space == (m, n) {
-        // Ocaml match je superior od rust matcha
-            4
-        } else if s0 == 0 || s0 == m || s1 == 0 || s1 == n {
-            6
-        } else {
-            9
-        };
+        let varne = mreza.sosedje(safe_space).len() + 1;
         let mut zaporedje =  random_array_homemade(velikost.0 * velikost.1 - varne, st_min,seed).into_iter();
         let mut naslednji : bool;
         for i in 0..velikost.0 {
