@@ -34,7 +34,7 @@ impl Display for Mreza {
         
         for i in 0..velikost.0 {
             dodatek = match self.tile((i,j)) {
-                none => String::from(" "),
+                None => String::from(" "),
                 Some(tile) => match *tile.status() {
                     Status::Open =>  match *tile.vsebina() {
                             Stevilo(x) => x.to_string() + " ",

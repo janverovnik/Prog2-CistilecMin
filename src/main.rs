@@ -146,7 +146,7 @@ mod game {
         app.add_systems(OnEnter(GameState::Game), (game_setup, setup_clock, setup_count))
         .add_systems(Update, game.run_if(in_state(GameState::Game)))
         .add_systems(Update, (handle_click, update_clock, update_count))
-        .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>, despawn_screen::<Counter>))
+        .add_systems(OnExit(GameState::Game), (despawn_screen::<OnGameScreen>, despawn_screen::<ClockDisplay>, despawn_screen::<Counter>, despawn_screen::<Text>))
         .add_event::<LeftClick>()
         .add_event::<RightClick>()
         .add_event::<GameOver>()
@@ -212,6 +212,7 @@ fn game_over (
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
     asset_server: Res<AssetServer>,
     mut konec: ResMut<KonecIgre>,
+    mut commands: Commands
 ) {
         for (mut sprite,mut tile) in &mut query  {
             if (tile.is_odprto == false) && tile.vsebina.vsebina == Vsebina::Mina {
@@ -220,6 +221,22 @@ fn game_over (
             }
         }
         konec.bool = true;
+        commands.spawn((Node {
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            Text::new("You lose!"),
+            TextLayout::new_with_justify(JustifyText::Center),
+            TextFont {
+            font: asset_server.load("times.ttf"),
+            font_size: 55.0,
+            ..default()
+            },
+        )
+        );
 }
 
 fn game_won (
@@ -227,6 +244,7 @@ fn game_won (
     asset_server: Res<AssetServer>,
     mut konec: ResMut<KonecIgre>,
     mut query : Query<(&mut Sprite, &mut BevyTile)>,
+    mut commands: Commands
 ) {
         for (mut sprite,mut tile) in &mut query  {
             if tile.vsebina.vsebina == Vsebina::Mina {
@@ -235,6 +253,22 @@ fn game_won (
             }
         }
         konec.bool = true;
+        commands.spawn((Node {
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            Text::new("You win!"),
+            TextLayout::new_with_justify(JustifyText::Center),
+            TextFont {
+            font: asset_server.load("times.ttf"),
+            font_size: 55.0,
+            ..default()
+            },
+        )
+    );
 }
 
 
